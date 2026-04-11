@@ -1,22 +1,49 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import EquipmentPage from './pages/EquipmentPage';
+import EquipmentDetailPage from './pages/EquipmentDetailPage';
+import ReportPage from './pages/ReportPage';
+import TicketsPage from './pages/TicketsPage';
+import TicketDetailPage from './pages/TicketDetailPage';
+import ProfilePage from './pages/ProfilePage';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+    },
+  },
+});
+
 export default function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-brand-navy text-white p-6">
-      <div className="max-w-sm text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-brand-lg bg-brand-red font-display font-black text-2xl mb-4">
-          NBA
-        </div>
-        <h1 className="font-display font-black text-2xl mb-2">Customer PWA</h1>
-        <p className="text-sm text-white/70 mb-4">แอปลูกค้า NBA Sport — แจ้งซ่อม, ดูประกัน, ต่อประกัน</p>
-        <div className="bg-white/10 rounded-brand p-4 text-xs text-white/80 text-left">
-          <div className="font-bold text-brand-gold mb-2">Sprint 5+ milestones</div>
-          <ul className="space-y-1 list-disc list-inside">
-            <li>LINE Login + Home + Equipment list</li>
-            <li>Ticket create + map picker + photo/video</li>
-            <li>Tracking timeline + rating</li>
-            <li>Warranty + PM + notifications</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<HomePage />} />
+            <Route path="/equipment" element={<EquipmentPage />} />
+            <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
+            <Route path="/report" element={<ReportPage />} />
+            <Route path="/tickets" element={<TicketsPage />} />
+            <Route path="/tickets/:id" element={<TicketDetailPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }

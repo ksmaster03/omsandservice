@@ -80,14 +80,16 @@ async function main() {
   // ─── Sample Customer ───
   const customer = await prisma.customer.upsert({
     where: { id: '00000000-0000-0000-0000-000000000001' },
-    update: {},
+    update: {
+      phone: '0891234567', // Customer PWA login uses this — mobile format, not office line
+    },
     create: {
       id: '00000000-0000-0000-0000-000000000001',
       name: 'The Fitness BKK (Demo)',
       taxId: '0105550000000',
       type: 'CORPORATE',
       contactName: 'คุณสมชาย',
-      phone: '021234567',
+      phone: '0891234567',
       email: 'contact@thefitness.demo',
       address: '999 ถ.สุขุมวิท กรุงเทพฯ 10110',
       lat: 13.7442,
@@ -95,6 +97,20 @@ async function main() {
     },
   });
   console.info(`  ✅ Sample customer: ${customer.name}`);
+
+  // ─── Customer PWA user (auto-created on first login, seed for convenience) ───
+  const cu = await prisma.customerUser.upsert({
+    where: { id: '10000000-0000-0000-0000-000000000001' },
+    update: {},
+    create: {
+      id: '10000000-0000-0000-0000-000000000001',
+      customerId: customer.id,
+      phone: '0891234567',
+      email: 'contact@thefitness.demo',
+      displayName: 'คุณสมชาย (The Fitness BKK)',
+    },
+  });
+  console.info(`  ✅ Customer PWA user: ${cu.phone} (DEV OTP: 000000)`);
 
   console.info('✨ Seed complete!');
 }

@@ -40,5 +40,13 @@ export default defineConfig({
       stdout: 'ignore',
       stderr: 'pipe',
     },
+    {
+      command: 'pnpm --filter @oms/customer run dev',
+      url: 'http://localhost:4120',
+      reuseExistingServer: true,
+      timeout: 30_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
   ],
 });

@@ -1,6 +1,7 @@
 export * from './asset';
 export * from './auth';
 export * from './customer';
+export * from './customer-auth';
 export * from './install';
 export * from './lead';
 export * from './pagination';

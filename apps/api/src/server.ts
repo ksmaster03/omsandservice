@@ -23,6 +23,8 @@ import renewalRoutes from './routes/renewals';
 import wmsRoutes from './routes/wms';
 import reportsRoutes from './routes/reports';
 import techRoutes from './routes/tech';
+import customerAuthRoutes from './routes/customer-auth';
+import customerDataRoutes from './routes/customer-data';
 import { prisma } from './lib/prisma';
 import { closeBrowser } from './lib/pdf';
 import { getUploadRoot } from './lib/storage';
@@ -89,6 +91,8 @@ export async function buildServer() {
   await app.register(wmsRoutes, { prefix: '/api/v1/internal/wms' });
   await app.register(reportsRoutes, { prefix: '/api/v1/internal/reports' });
   await app.register(techRoutes, { prefix: '/api/v1/tech' });
+  await app.register(customerAuthRoutes, { prefix: '/api/v1/customer/auth' });
+  await app.register(customerDataRoutes, { prefix: '/api/v1/customer' });
 
   // Root
   app.get('/', async () => ({

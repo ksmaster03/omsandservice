@@ -21,7 +21,8 @@
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.28.0",
     "tailwind-merge": "^2.5.5",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.2",
+    "date-fns": "^4.1.0"
   },
   "devDependencies": {
     "@oms/config": "workspace:*",

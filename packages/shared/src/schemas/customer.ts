@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { listQuerySchema } from './pagination';
 
 export const createCustomerSchema = z.object({
   name: z.string().min(1).max(200),
@@ -15,3 +16,8 @@ export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 
 export const updateCustomerSchema = createCustomerSchema.partial();
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
+
+export const customerListQuerySchema = listQuerySchema.extend({
+  type: z.enum(['INDIVIDUAL', 'CORPORATE']).optional(),
+});
+export type CustomerListQuery = z.infer<typeof customerListQuerySchema>;

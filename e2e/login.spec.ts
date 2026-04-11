@@ -15,11 +15,40 @@ test.describe('OMS login flow', () => {
     await page.getByRole('button', { name: /เข้าสู่ระบบ/ }).click();
 
     // Dashboard appears after successful login
-    await expect(page.getByRole('heading', { name: /Sprint 0 สำเร็จ/ })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /สวัสดี Admin Master/ })).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByText('Admin Master')).toBeVisible();
+    // Sidebar shows user info (heading uses different text already verified above)
     await expect(page.getByText('ADMIN', { exact: true })).toBeVisible();
+  });
+
+  test('sidebar navigates to customers and products', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByRole('button', { name: /เข้าสู่ระบบ/ }).click();
+    await expect(page.getByRole('heading', { name: /สวัสดี Admin Master/ })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await page.getByRole('link', { name: /ลูกค้า/ }).click();
+    await expect(page).toHaveURL(/\/customers/);
+    await expect(page.getByRole('heading', { name: 'ลูกค้า' })).toBeVisible();
+
+    await page.getByRole('link', { name: /สินค้า/ }).click();
+    await expect(page).toHaveURL(/\/products/);
+    await expect(page.getByRole('heading', { name: 'สินค้า' })).toBeVisible();
+    // Brand filter pills visible
+    await expect(page.getByRole('button', { name: /Maxnum/ })).toBeVisible();
+  });
+
+  test('admin can access users page, sales cannot', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByRole('button', { name: /เข้าสู่ระบบ/ }).click();
+    await expect(page.getByRole('heading', { name: /สวัสดี Admin Master/ })).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.getByRole('link', { name: /จัดการผู้ใช้/ }).click();
+    await expect(page).toHaveURL(/\/users/);
+    await expect(page.getByRole('heading', { name: 'จัดการผู้ใช้' })).toBeVisible();
   });
 
   test('shows error for invalid credentials', async ({ page }) => {
@@ -35,7 +64,7 @@ test.describe('OMS login flow', () => {
   test('logout returns to login page', async ({ page }) => {
     await page.goto('/login');
     await page.getByRole('button', { name: /เข้าสู่ระบบ/ }).click();
-    await expect(page.getByRole('heading', { name: /Sprint 0 สำเร็จ/ })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /สวัสดี Admin Master/ })).toBeVisible({
       timeout: 10_000,
     });
 

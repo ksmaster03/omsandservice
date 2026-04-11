@@ -7,6 +7,9 @@ import { env, isDev } from './config/env';
 import authPlugin from './plugins/auth';
 import healthRoutes from './routes/health';
 import authRoutes from './routes/auth';
+import customerRoutes from './routes/customers';
+import productRoutes from './routes/products';
+import userRoutes from './routes/users';
 import { prisma } from './lib/prisma';
 
 export async function buildServer() {
@@ -42,8 +45,11 @@ export async function buildServer() {
   // Routes
   await app.register(healthRoutes);
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
+  await app.register(customerRoutes, { prefix: '/api/v1/internal/customers' });
+  await app.register(productRoutes, { prefix: '/api/v1/internal/products' });
+  await app.register(userRoutes, { prefix: '/api/v1/internal/users' });
 
-  // TODO Sprint 1+: customer, product, lead, quote, SO, install, ticket, etc.
+  // TODO Sprint 2+: lead, quote, SO, install, ticket, etc.
 
   // Root
   app.get('/', async () => ({

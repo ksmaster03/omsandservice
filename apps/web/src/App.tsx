@@ -4,6 +4,9 @@ import DashboardPage from './pages/DashboardPage';
 import CustomersPage from './pages/CustomersPage';
 import ProductsPage from './pages/ProductsPage';
 import UsersPage from './pages/UsersPage';
+import LeadsPage from './pages/LeadsPage';
+import QuotationsPage from './pages/QuotationsPage';
+import SalesOrdersPage from './pages/SalesOrdersPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import { useAuth } from './store/auth';
@@ -26,6 +29,9 @@ export default function App() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/leads" element={<LeadsPage />} />
+        <Route path="/quotations" element={<QuotationsPage />} />
+        <Route path="/sales-orders" element={<SalesOrdersPage />} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route

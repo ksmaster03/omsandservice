@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import PageHeader from '../components/PageHeader';
-import { listCustomers, listProducts, listUsers } from '../lib/queries';
+import {
+  listCustomers,
+  listProducts,
+  listUsers,
+  listQuotations,
+  listSalesOrders,
+} from '../lib/queries';
 import { useAuth } from '../store/auth';
 
 function StatCard({
@@ -47,57 +53,79 @@ export default function DashboardPage() {
     queryFn: () => listUsers({ pageSize: 1 }),
     enabled: isAdmin,
   });
+  const quotes = useQuery({
+    queryKey: ['dashboard-quotes'],
+    queryFn: () => listQuotations({ pageSize: 1 }),
+  });
+  const salesOrders = useQuery({
+    queryKey: ['dashboard-sales-orders'],
+    queryFn: () => listSalesOrders({ pageSize: 1 }),
+  });
 
   return (
     <>
       <PageHeader title={`สวัสดี ${user?.name ?? ''}`} subtitle="ภาพรวมระบบ NBA Sport OMS" />
       <div className="p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           <StatCard
-            label="ลูกค้าทั้งหมด"
+            label="ลูกค้า"
             value={customers.data?.total ?? '—'}
             icon="groups"
             accent="bg-brand-red"
           />
           <StatCard
-            label="สินค้าในระบบ"
+            label="สินค้า"
             value={products.data?.total ?? '—'}
             icon="fitness_center"
             accent="bg-brand-gold"
           />
-          {isAdmin && (
+          <StatCard
+            label="ใบเสนอราคา"
+            value={quotes.data?.total ?? '—'}
+            icon="request_quote"
+            accent="bg-status-info"
+          />
+          <StatCard
+            label="Sales Orders"
+            value={salesOrders.data?.total ?? '—'}
+            icon="receipt_long"
+            accent="bg-status-success"
+          />
+          {isAdmin ? (
             <StatCard
               label="ผู้ใช้ระบบ"
               value={users.data?.total ?? '—'}
               icon="manage_accounts"
               accent="bg-brand-navy"
             />
+          ) : (
+            <StatCard label="Sprint" value="2" icon="rocket_launch" accent="bg-brand-navy" />
           )}
-          <StatCard label="Sprint ปัจจุบัน" value="1" icon="rocket_launch" accent="bg-status-success" />
         </div>
 
         <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-sm p-6">
-          <h2 className="font-display font-bold text-lg text-brand-navy mb-3">🚀 Sprint 1 เสร็จแล้ว</h2>
+          <h2 className="font-display font-bold text-lg text-brand-navy mb-3">🚀 Sprint 2 เสร็จแล้ว — Sales Flow</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <div className="font-semibold text-gray-700 mb-2">✅ ที่ทำเสร็จ</div>
               <ul className="space-y-1 text-gray-600 list-disc list-inside text-xs">
-                <li>Customer CRUD + ค้นหา + filter ประเภท</li>
-                <li>Product catalog + brand filter + pagination</li>
-                <li>User management (Admin-only)</li>
-                <li>RBAC middleware + role guards</li>
-                <li>Pagination utility + shared schemas</li>
-                <li>Vitest 28 tests ใหม่สำหรับ routes</li>
+                <li>Lead pipeline (5 stages + board view)</li>
+                <li>Demo scheduler API</li>
+                <li>Quotation builder พร้อม VAT + ส่วนลด + multi-item</li>
+                <li>Quote → Sales Order conversion + milestone templates</li>
+                <li>Payment milestone tracking (30/30/40, 50/50, FULL)</li>
+                <li>Auto-number Q- / SO- ต่อเดือน</li>
+                <li>Vitest 20 tests ใหม่ (full sales flow integration)</li>
               </ul>
             </div>
             <div>
-              <div className="font-semibold text-gray-700 mb-2">🔜 Sprint 2 ถัดไป</div>
+              <div className="font-semibold text-gray-700 mb-2">🔜 Sprint 3 ถัดไป</div>
               <ul className="space-y-1 text-gray-600 list-disc list-inside text-xs">
-                <li>Lead / Sales Pipeline (drag-drop board)</li>
-                <li>Demo scheduler</li>
-                <li>Quotation builder + PDF export</li>
-                <li>Sales Order จาก Quote (convert)</li>
-                <li>Payment milestone generator</li>
+                <li>Install assignment + photo upload → S3</li>
+                <li>Asset auto-generation จาก install completion</li>
+                <li>Warranty tracking + alert ก่อนหมด</li>
+                <li>PM schedule generator</li>
+                <li>Service Ticket พื้นฐาน</li>
               </ul>
             </div>
           </div>

@@ -3,6 +3,9 @@ import { useAuth } from '../store/auth';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: 'dashboard', section: 'ภาพรวม' },
+  { to: '/leads', label: 'Sales Pipeline', icon: 'filter_alt', section: 'การขาย' },
+  { to: '/quotations', label: 'ใบเสนอราคา', icon: 'request_quote', section: 'การขาย' },
+  { to: '/sales-orders', label: 'Sales Orders', icon: 'receipt_long', section: 'การขาย' },
   { to: '/customers', label: 'ลูกค้า', icon: 'groups', section: 'Master Data' },
   { to: '/products', label: 'สินค้า', icon: 'fitness_center', section: 'Master Data' },
   { to: '/users', label: 'จัดการผู้ใช้', icon: 'manage_accounts', section: 'ระบบ', adminOnly: true },

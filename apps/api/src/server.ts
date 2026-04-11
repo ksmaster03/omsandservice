@@ -10,6 +10,9 @@ import authRoutes from './routes/auth';
 import customerRoutes from './routes/customers';
 import productRoutes from './routes/products';
 import userRoutes from './routes/users';
+import leadRoutes from './routes/leads';
+import quotationRoutes from './routes/quotations';
+import salesOrderRoutes from './routes/sales-orders';
 import { prisma } from './lib/prisma';
 
 export async function buildServer() {
@@ -48,8 +51,11 @@ export async function buildServer() {
   await app.register(customerRoutes, { prefix: '/api/v1/internal/customers' });
   await app.register(productRoutes, { prefix: '/api/v1/internal/products' });
   await app.register(userRoutes, { prefix: '/api/v1/internal/users' });
+  await app.register(leadRoutes, { prefix: '/api/v1/internal/leads' });
+  await app.register(quotationRoutes, { prefix: '/api/v1/internal/quotations' });
+  await app.register(salesOrderRoutes, { prefix: '/api/v1/internal/sales-orders' });
 
-  // TODO Sprint 2+: lead, quote, SO, install, ticket, etc.
+  // TODO Sprint 3+: install, asset, warranty, PM, ticket, etc.
 
   // Root
   app.get('/', async () => ({

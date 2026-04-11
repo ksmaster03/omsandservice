@@ -51,6 +51,169 @@ export async function createUser(payload: {
   return res.data.data as User;
 }
 
+// ─── Leads ───
+export async function listLeads(params: ListParams = {}) {
+  const res = await api.get('/internal/leads', { params });
+  return res.data.data as Paginated<Lead>;
+}
+
+export async function getLeadPipeline() {
+  const res = await api.get('/internal/leads/pipeline');
+  return res.data.data as Record<string, Lead[]>;
+}
+
+export async function createLead(payload: {
+  customerId: string;
+  value: number;
+  stage?: string;
+  note?: string;
+}) {
+  const res = await api.post('/internal/leads', payload);
+  return res.data.data as Lead;
+}
+
+export async function updateLeadStage(id: string, stage: string, note?: string) {
+  const res = await api.post(`/internal/leads/${id}/stage`, { stage, note });
+  return res.data.data as Lead;
+}
+
+// ─── Quotations ───
+export async function listQuotations(params: ListParams = {}) {
+  const res = await api.get('/internal/quotations', { params });
+  return res.data.data as Paginated<Quotation>;
+}
+
+export async function getQuotation(id: string) {
+  const res = await api.get(`/internal/quotations/${id}`);
+  return res.data.data as QuotationDetail;
+}
+
+export async function createQuotation(payload: {
+  customerId: string;
+  leadId?: string;
+  items: Array<{ productId: string; qty: number; unitPrice: number; discount?: number }>;
+  discount?: number;
+  vatRate?: number;
+  validDays?: number;
+}) {
+  const res = await api.post('/internal/quotations', payload);
+  return res.data.data as Quotation;
+}
+
+export async function updateQuotationStatus(id: string, status: string) {
+  const res = await api.post(`/internal/quotations/${id}/status`, { status });
+  return res.data.data as Quotation;
+}
+
+// ─── Sales Orders ───
+export async function listSalesOrders(params: ListParams = {}) {
+  const res = await api.get('/internal/sales-orders', { params });
+  return res.data.data as Paginated<SalesOrder>;
+}
+
+export async function getSalesOrder(id: string) {
+  const res = await api.get(`/internal/sales-orders/${id}`);
+  return res.data.data as SalesOrderDetail;
+}
+
+export async function createSOFromQuote(
+  quotationId: string,
+  milestoneTemplate: '30_30_40' | '50_50' | 'FULL' = '30_30_40',
+) {
+  const res = await api.post('/internal/sales-orders/from-quote', {
+    quotationId,
+    milestoneTemplate,
+  });
+  return res.data.data as SalesOrderDetail;
+}
+
+export async function markMilestonePaid(milestoneId: string) {
+  const res = await api.post(`/internal/sales-orders/milestones/${milestoneId}/mark-paid`);
+  return res.data.data;
+}
+
+// ─── Sprint 2 domain types ───
+export type LeadStage = 'LEAD' | 'QUALIFIED' | 'DEMO' | 'QUOTE' | 'NEGOTIATION' | 'WON' | 'LOST';
+
+export interface Lead {
+  id: string;
+  stage: LeadStage;
+  value: string;
+  expectedClose: string | null;
+  note: string | null;
+  customer: { id: string; name: string };
+  owner?: { id: string; name: string };
+  createdAt: string;
+}
+
+export type QuoteStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+
+export interface Quotation {
+  id: string;
+  quoteNo: string;
+  status: QuoteStatus;
+  subtotal: string;
+  discount: string;
+  vat: string;
+  total: string;
+  validUntil: string;
+  customer: { id: string; name: string };
+  sales?: { id: string; name: string };
+  createdAt: string;
+}
+
+export interface QuotationDetail extends Quotation {
+  items: Array<{
+    id: string;
+    productId: string;
+    qty: number;
+    unitPrice: string;
+    discount: string;
+    product: Product;
+  }>;
+  order: { id: string; soNo: string; status: string } | null;
+}
+
+export interface PaymentMilestone {
+  id: string;
+  seq: number;
+  label: string;
+  amount: string;
+  dueDate: string;
+  paidAt: string | null;
+  status: 'PENDING' | 'DUE' | 'PAID' | 'OVERDUE';
+}
+
+export type SOStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'IN_PRODUCTION'
+  | 'READY_TO_DELIVER'
+  | 'INSTALLED'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export interface SalesOrder {
+  id: string;
+  soNo: string;
+  status: SOStatus;
+  total: string;
+  createdAt: string;
+  customer: { id: string; name: string };
+  paymentProgress?: string;
+}
+
+export interface SalesOrderDetail extends SalesOrder {
+  items: Array<{
+    id: string;
+    qty: number;
+    unitPrice: string;
+    product: Product;
+  }>;
+  milestones: PaymentMilestone[];
+  quotation: { id: string; quoteNo: string } | null;
+}
+
 // Domain types (mirror Prisma models, but only the fields we use in the UI)
 export interface Customer {
   id: string;

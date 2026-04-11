@@ -6,8 +6,8 @@ import { useAuth } from '../store/auth';
 export default function LoginPage() {
   const navigate = useNavigate();
   const setUser = useAuth((s) => s.setUser);
-  const [email, setEmail] = useState('admin@nbasport.local');
-  const [password, setPassword] = useState('Nba@12345');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,10 +81,6 @@ export default function LoginPage() {
             {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
-
-        <p className="text-[10px] text-gray-400 text-center mt-4">
-          Sprint 0 · seed credentials pre-filled
-        </p>
       </div>
     </div>
   );

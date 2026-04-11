@@ -11,8 +11,8 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } 
 function LoginScreen() {
   const navigate = useNavigate();
   const setUser = useAuth((s) => s.setUser);
-  const [email, setEmail] = useState('service1@nbasport.local');
-  const [password, setPassword] = useState('Nba@12345');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,9 +79,6 @@ function LoginScreen() {
             {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
-        <p className="text-[10px] text-white/40 text-center mt-3">
-          Seed: service1@nbasport.local / Nba@12345
-        </p>
       </div>
     </div>
   );

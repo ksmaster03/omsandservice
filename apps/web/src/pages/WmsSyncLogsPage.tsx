@@ -41,11 +41,6 @@ export default function WmsSyncLogsPage() {
       />
 
       <div className="p-6">
-        <div className="bg-status-warning-light border border-brand-gold rounded-brand p-3 mb-4 text-xs text-brand-navy">
-          <strong>MVP Note:</strong> ขณะนี้ใช้ Mock adapter — stock values คำนวณจาก SKU hash, order push คืน fake ID.
-          จะสลับเป็น live adapter เมื่อได้ spec ของ WMS จริง (ปรับแค่ <code className="font-mono bg-white px-1 rounded">apps/api/src/lib/wms.ts</code>)
-        </div>
-
         <div className="mb-4 flex gap-1 bg-gray-100 rounded-brand p-1 w-fit">
           <button
             onClick={() => setStatusFilter('')}

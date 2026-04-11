@@ -8,9 +8,8 @@ export default function LoginPage() {
   const setMe = useAuth((s) => s.setMe);
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phone, setPhone] = useState('0891234567');
+  const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [devCode, setDevCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +18,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const r = await requestOtp(phone);
-      if (r.dev_code) setDevCode(r.dev_code);
+      await requestOtp(phone);
       setStep('otp');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
@@ -74,9 +72,6 @@ export default function LoginPage() {
                 className="w-full px-3 py-3 bg-white/10 border border-white/20 rounded-brand text-base text-white focus:outline-none focus:border-brand-gold"
                 required
               />
-              <div className="text-[10px] text-white/40 mt-1">
-                Dev: 0891234567 (seed sample customer)
-              </div>
             </div>
             {error && (
               <div className="text-xs text-brand-red bg-brand-red-light rounded-brand p-2">{error}</div>
@@ -118,11 +113,6 @@ export default function LoginPage() {
                 className="w-full px-3 py-3 bg-white/10 border border-white/20 rounded-brand text-center text-2xl tracking-[0.5em] font-mono text-white focus:outline-none focus:border-brand-gold"
                 required
               />
-              {devCode && (
-                <div className="text-[10px] text-brand-gold mt-1 text-center">
-                  DEV MODE: รหัสคือ {devCode} (หรือ 6 หลักอะไรก็ได้)
-                </div>
-              )}
             </div>
             {error && (
               <div className="text-xs text-brand-red bg-brand-red-light rounded-brand p-2">{error}</div>

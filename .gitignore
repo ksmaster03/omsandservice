@@ -58,3 +58,7 @@ temp/
 # Production secrets (never commit)
 .secrets/
 
+
+# Playwright screenshot output
+screenshots/
+

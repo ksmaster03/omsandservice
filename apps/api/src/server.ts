@@ -3,6 +3,8 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
 import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import { env, isDev } from './config/env';
 import authPlugin from './plugins/auth';
 import healthRoutes from './routes/health';
@@ -13,8 +15,14 @@ import userRoutes from './routes/users';
 import leadRoutes from './routes/leads';
 import quotationRoutes from './routes/quotations';
 import salesOrderRoutes from './routes/sales-orders';
+import installationRoutes from './routes/installations';
+import assetRoutes from './routes/assets';
+import pmRoutes from './routes/pm-schedules';
+import ticketRoutes from './routes/service-tickets';
 import { prisma } from './lib/prisma';
 import { closeBrowser } from './lib/pdf';
+import { getUploadRoot } from './lib/storage';
+import { mkdir } from 'node:fs/promises';
 
 export async function buildServer() {
   const app = Fastify({
@@ -28,8 +36,11 @@ export async function buildServer() {
         }
       : { level: 'info' },
     trustProxy: true,
-    bodyLimit: 1024 * 1024, // 1 MB (actual uploads go via S3 presigned URLs)
+    bodyLimit: 1024 * 1024, // 1 MB for JSON — multipart has its own limit
   });
+
+  // Ensure upload dir exists before static serving
+  await mkdir(getUploadRoot(), { recursive: true });
 
   // Core plugins
   await app.register(helmet, { contentSecurityPolicy: false });
@@ -44,6 +55,17 @@ export async function buildServer() {
       timeWindow: env.RATE_LIMIT_WINDOW,
     });
   }
+  await app.register(multipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50 MB hard limit (video ceiling)
+      files: 5, // max 5 files per request (photo ceiling)
+    },
+  });
+  await app.register(fastifyStatic, {
+    root: getUploadRoot(),
+    prefix: '/uploads/',
+    decorateReply: false,
+  });
   await app.register(authPlugin);
 
   // Routes
@@ -55,8 +77,10 @@ export async function buildServer() {
   await app.register(leadRoutes, { prefix: '/api/v1/internal/leads' });
   await app.register(quotationRoutes, { prefix: '/api/v1/internal/quotations' });
   await app.register(salesOrderRoutes, { prefix: '/api/v1/internal/sales-orders' });
-
-  // TODO Sprint 3+: install, asset, warranty, PM, ticket, etc.
+  await app.register(installationRoutes, { prefix: '/api/v1/internal/installations' });
+  await app.register(assetRoutes, { prefix: '/api/v1/internal/assets' });
+  await app.register(pmRoutes, { prefix: '/api/v1/internal/pm-schedules' });
+  await app.register(ticketRoutes, { prefix: '/api/v1/internal/tickets' });
 
   // Root
   app.get('/', async () => ({

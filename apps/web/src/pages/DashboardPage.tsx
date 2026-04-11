@@ -6,6 +6,9 @@ import {
   listUsers,
   listQuotations,
   listSalesOrders,
+  listAssets,
+  listPmSchedules,
+  listTickets,
 } from '../lib/queries';
 import { useAuth } from '../store/auth';
 
@@ -61,71 +64,67 @@ export default function DashboardPage() {
     queryKey: ['dashboard-sales-orders'],
     queryFn: () => listSalesOrders({ pageSize: 1 }),
   });
+  const assets = useQuery({
+    queryKey: ['dashboard-assets'],
+    queryFn: () => listAssets({ pageSize: 1 }),
+  });
+  const pmUpcoming = useQuery({
+    queryKey: ['dashboard-pm-upcoming'],
+    queryFn: () => listPmSchedules({ upcoming: true, pageSize: 1 }),
+  });
+  const tickets = useQuery({
+    queryKey: ['dashboard-tickets'],
+    queryFn: () => listTickets({ pageSize: 1 }),
+  });
 
   return (
     <>
       <PageHeader title={`สวัสดี ${user?.name ?? ''}`} subtitle="ภาพรวมระบบ NBA Sport OMS" />
       <div className="p-6">
+        <div className="mb-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Master + Sales</div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-          <StatCard
-            label="ลูกค้า"
-            value={customers.data?.total ?? '—'}
-            icon="groups"
-            accent="bg-brand-red"
-          />
-          <StatCard
-            label="สินค้า"
-            value={products.data?.total ?? '—'}
-            icon="fitness_center"
-            accent="bg-brand-gold"
-          />
-          <StatCard
-            label="ใบเสนอราคา"
-            value={quotes.data?.total ?? '—'}
-            icon="request_quote"
-            accent="bg-status-info"
-          />
-          <StatCard
-            label="Sales Orders"
-            value={salesOrders.data?.total ?? '—'}
-            icon="receipt_long"
-            accent="bg-status-success"
-          />
+          <StatCard label="ลูกค้า" value={customers.data?.total ?? '—'} icon="groups" accent="bg-brand-red" />
+          <StatCard label="สินค้า" value={products.data?.total ?? '—'} icon="fitness_center" accent="bg-brand-gold" />
+          <StatCard label="ใบเสนอราคา" value={quotes.data?.total ?? '—'} icon="request_quote" accent="bg-status-info" />
+          <StatCard label="Sales Orders" value={salesOrders.data?.total ?? '—'} icon="receipt_long" accent="bg-status-success" />
           {isAdmin ? (
-            <StatCard
-              label="ผู้ใช้ระบบ"
-              value={users.data?.total ?? '—'}
-              icon="manage_accounts"
-              accent="bg-brand-navy"
-            />
+            <StatCard label="ผู้ใช้ระบบ" value={users.data?.total ?? '—'} icon="manage_accounts" accent="bg-brand-navy" />
           ) : (
-            <StatCard label="Sprint" value="2" icon="rocket_launch" accent="bg-brand-navy" />
+            <StatCard label="Sprint" value="3" icon="rocket_launch" accent="bg-brand-navy" />
           )}
         </div>
 
+        <div className="mb-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">After-Sales</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 mb-6">
+          <StatCard label="เครื่องของลูกค้า" value={assets.data?.total ?? '—'} icon="inventory_2" accent="bg-brand-navy" />
+          <StatCard label="PM ที่ถึงกำหนด (30 วัน)" value={pmUpcoming.data?.total ?? '—'} icon="build" accent="bg-status-warning" />
+          <StatCard label="Service Tickets" value={tickets.data?.total ?? '—'} icon="confirmation_number" accent="bg-brand-red" />
+        </div>
+
         <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-sm p-6">
-          <h2 className="font-display font-bold text-lg text-brand-navy mb-3">🚀 Sprint 2 เสร็จแล้ว — Sales Flow</h2>
+          <h2 className="font-display font-bold text-lg text-brand-navy mb-3">🚀 Sprint 3 เสร็จแล้ว — After-Sales Foundation</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <div className="font-semibold text-gray-700 mb-2">✅ ที่ทำเสร็จ</div>
               <ul className="space-y-1 text-gray-600 list-disc list-inside text-xs">
-                <li>Lead pipeline (5 stages + board view)</li>
-                <li>Demo scheduler API</li>
-                <li>Quotation builder พร้อม VAT + ส่วนลด + multi-item</li>
-                <li>Quote → Sales Order conversion + milestone templates</li>
-                <li>Payment milestone tracking (30/30/40, 50/50, FULL)</li>
-                <li>Auto-number Q- / SO- ต่อเดือน</li>
-                <li>Vitest 20 tests ใหม่ (full sales flow integration)</li>
+                <li>Installation flow (schedule → assign → complete → auto Asset)</li>
+                <li>Photo upload (local FS now, S3-ready interface)</li>
+                <li>Asset registry + computed warranty status (active/expiring/expired)</li>
+                <li>PM schedule auto-generator (รอบถัดไปเมื่อปิดงาน)</li>
+                <li>Service Ticket + timeline events + SLA due</li>
+                <li>Auto-number T- ต่อเดือน</li>
+                <li>Vitest 18 tests ใหม่ (full after-sales flow integration)</li>
               </ul>
             </div>
             <div>
-              <div className="font-semibold text-gray-700 mb-2">🔜 Sprint 3 ถัดไป</div>
+              <div className="font-semibold text-gray-700 mb-2">🔜 Sprint 4 ถัดไป</div>
               <ul className="space-y-1 text-gray-600 list-disc list-inside text-xs">
-                <li>Install assignment + photo upload → S3</li>
-                <li>Asset auto-generation จาก install completion</li>
-                <li>Warranty tracking + alert ก่อนหมด</li>
-                <li>PM schedule generator</li>
-                <li>Service Ticket พื้นฐาน</li>
+                <li>Warranty renewal workflow (offer/accept/paid)</li>
+                <li>WMS integration (mock → real spec)</li>
+                <li>LINE OA chat + push notifications</li>
+                <li>Customer PWA wired to real APIs</li>
+                <li>Tech PWA GPS tracking</li>
+                <li>Reports + dashboard metrics</li>
               </ul>
             </div>
           </div>

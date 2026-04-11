@@ -175,6 +175,207 @@ export async function createSOFromQuote(
   return res.data.data as SalesOrderDetail;
 }
 
+// ─── Installations (Sprint 3) ───
+export async function listInstallations(params: ListParams = {}) {
+  const res = await api.get('/internal/installations', { params });
+  return res.data.data as Paginated<Installation>;
+}
+
+export async function getInstallation(id: string) {
+  const res = await api.get(`/internal/installations/${id}`);
+  return res.data.data as InstallationDetail;
+}
+
+export async function scheduleInstallation(payload: {
+  soId: string;
+  scheduledAt: string;
+  techId?: string;
+}) {
+  const res = await api.post('/internal/installations', payload);
+  return res.data.data as Installation;
+}
+
+export async function assignInstallation(id: string, techId: string, scheduledAt?: string) {
+  const res = await api.post(`/internal/installations/${id}/assign`, { techId, scheduledAt });
+  return res.data.data as Installation;
+}
+
+export async function completeInstallation(
+  id: string,
+  payload: { assets: Array<{ soItemId: string; serialNo: string }>; note?: string; locationDetail?: string },
+) {
+  const res = await api.post(`/internal/installations/${id}/complete`, payload);
+  return res.data.data;
+}
+
+export async function uploadInstallationPhotos(id: string, files: File[]) {
+  const fd = new FormData();
+  for (const f of files) fd.append('photo', f);
+  const res = await api.post(`/internal/installations/${id}/photos`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data.data;
+}
+
+// ─── Assets ───
+export async function listAssets(params: ListParams = {}) {
+  const res = await api.get('/internal/assets', { params });
+  return res.data.data as Paginated<Asset>;
+}
+
+export async function getAsset(id: string) {
+  const res = await api.get(`/internal/assets/${id}`);
+  return res.data.data as AssetDetail;
+}
+
+// ─── PM Schedules ───
+export async function listPmSchedules(params: ListParams & { upcoming?: boolean } = {}) {
+  const res = await api.get('/internal/pm-schedules', { params });
+  return res.data.data as Paginated<PmScheduleItem>;
+}
+
+export async function assignPm(id: string, techId: string) {
+  const res = await api.post(`/internal/pm-schedules/${id}/assign`, { techId });
+  return res.data.data;
+}
+
+export async function completePm(id: string, note?: string) {
+  const res = await api.post(`/internal/pm-schedules/${id}/complete`, { note });
+  return res.data.data;
+}
+
+// ─── Service Tickets ───
+export async function listTickets(params: ListParams = {}) {
+  const res = await api.get('/internal/tickets', { params });
+  return res.data.data as Paginated<ServiceTicket>;
+}
+
+export async function getTicket(id: string) {
+  const res = await api.get(`/internal/tickets/${id}`);
+  return res.data.data as ServiceTicketDetail;
+}
+
+export async function createTicket(payload: {
+  customerId: string;
+  assetId: string;
+  problemType: string;
+  priority: string;
+  description: string;
+  locationDetail?: string;
+}) {
+  const res = await api.post('/internal/tickets', payload);
+  return res.data.data as ServiceTicket;
+}
+
+export async function assignTicket(id: string, techId: string) {
+  const res = await api.post(`/internal/tickets/${id}/assign`, { techId });
+  return res.data.data;
+}
+
+export async function updateTicketStage(id: string, stage: string, note?: string) {
+  const res = await api.post(`/internal/tickets/${id}/stage`, { stage, note });
+  return res.data.data;
+}
+
+// ─── Sprint 3 domain types ───
+export interface Installation {
+  id: string;
+  soId: string;
+  scheduledAt: string;
+  completedAt: string | null;
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  techId: string | null;
+  note: string | null;
+  photos: string[];
+  so: { id: string; soNo: string; customer: { id: string; name: string; phone: string | null } };
+  tech: { id: string; name: string; phone: string | null } | null;
+}
+
+export interface InstallationDetail extends Installation {
+  so: Installation['so'] & {
+    customer: Customer;
+    items: Array<{
+      id: string;
+      qty: number;
+      unitPrice: string;
+      product: Product;
+    }>;
+  };
+}
+
+export interface Asset {
+  id: string;
+  serialNo: string;
+  installedAt: string;
+  warrantyEnd: string;
+  nextPmDate: string | null;
+  locationDetail: string | null;
+  product: { id: string; name: string; brand: string; sku: string; warrantyMonths: number; pmIntervalMonths: number };
+  customer: { id: string; name: string };
+  warrantyStatus: 'active' | 'expiring' | 'expired';
+  warrantyDaysLeft: number;
+  _count: { tickets: number; pmSchedules: number };
+}
+
+export interface AssetDetail extends Asset {
+  pmSchedules: PmScheduleItem[];
+  tickets: ServiceTicket[];
+}
+
+export interface PmScheduleItem {
+  id: string;
+  assetId: string;
+  scheduledAt: string;
+  completedAt: string | null;
+  status: 'PENDING' | 'SCHEDULED' | 'COMPLETED' | 'OVERDUE' | 'SKIPPED';
+  techId: string | null;
+  note: string | null;
+  asset: {
+    id: string;
+    serialNo: string;
+    customer: { id: string; name: string; phone: string | null };
+    product: { id: string; name: string; brand: string; sku: string; pmIntervalMonths: number };
+  };
+  tech: { id: string; name: string; phone: string | null } | null;
+}
+
+export type TicketStage =
+  | 'RECEIVED'
+  | 'ASSIGNED'
+  | 'EN_ROUTE'
+  | 'ARRIVED'
+  | 'REPAIRING'
+  | 'CLOSED'
+  | 'CANCELLED';
+
+export interface ServiceTicket {
+  id: string;
+  ticketNo: string;
+  problemType: 'BELT' | 'NOISE' | 'CONSOLE' | 'MOTOR' | 'POWER' | 'OTHER';
+  priority: 'URGENT' | 'NORMAL' | 'LOW';
+  description: string;
+  stage: TicketStage;
+  slaDueAt: string | null;
+  closedAt: string | null;
+  customerRating: number | null;
+  createdAt: string;
+  customer: { id: string; name: string; phone: string | null };
+  asset: { id: string; serialNo: string; product: { id: string; name: string; sku: string } };
+  tech: { id: string; name: string; phone: string | null } | null;
+  _count?: { photos: number; events: number };
+}
+
+export interface ServiceTicketDetail extends ServiceTicket {
+  photos: Array<{ id: string; s3Key: string; size: number }>;
+  events: Array<{
+    id: string;
+    stage: TicketStage;
+    note: string | null;
+    createdAt: string;
+    actor: { id: string; name: string } | null;
+  }>;
+}
+
 export async function markMilestonePaid(milestoneId: string) {
   const res = await api.post(`/internal/sales-orders/milestones/${milestoneId}/mark-paid`);
   return res.data.data;

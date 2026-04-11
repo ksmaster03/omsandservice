@@ -8,6 +8,10 @@ import LeadsPage from './pages/LeadsPage';
 import DemosPage from './pages/DemosPage';
 import QuotationsPage from './pages/QuotationsPage';
 import SalesOrdersPage from './pages/SalesOrdersPage';
+import InstallationsPage from './pages/InstallationsPage';
+import AssetsPage from './pages/AssetsPage';
+import PmSchedulePage from './pages/PmSchedulePage';
+import ServiceTicketsPage from './pages/ServiceTicketsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import { useAuth } from './store/auth';
@@ -34,6 +38,10 @@ export default function App() {
         <Route path="/demos" element={<DemosPage />} />
         <Route path="/quotations" element={<QuotationsPage />} />
         <Route path="/sales-orders" element={<SalesOrdersPage />} />
+        <Route path="/installations" element={<InstallationsPage />} />
+        <Route path="/assets" element={<AssetsPage />} />
+        <Route path="/pm-schedules" element={<PmSchedulePage />} />
+        <Route path="/tickets" element={<ServiceTicketsPage />} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route

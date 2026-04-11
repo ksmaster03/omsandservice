@@ -29,11 +29,11 @@ test.describe('OMS login flow', () => {
       timeout: 10_000,
     });
 
-    await page.getByRole('link', { name: /ลูกค้า/ }).click();
+    await page.getByRole('link', { name: 'ลูกค้า', exact: true }).click();
     await expect(page).toHaveURL(/\/customers/);
     await expect(page.getByRole('heading', { name: 'ลูกค้า' })).toBeVisible();
 
-    await page.getByRole('link', { name: /สินค้า/ }).click();
+    await page.getByRole('link', { name: 'สินค้า', exact: true }).click();
     await expect(page).toHaveURL(/\/products/);
     await expect(page.getByRole('heading', { name: 'สินค้า' })).toBeVisible();
     // Brand filter pills visible

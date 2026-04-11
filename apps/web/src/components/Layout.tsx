@@ -7,6 +7,10 @@ const navItems = [
   { to: '/demos', label: 'นัดหมาย Demo', icon: 'event', section: 'การขาย' },
   { to: '/quotations', label: 'ใบเสนอราคา', icon: 'request_quote', section: 'การขาย' },
   { to: '/sales-orders', label: 'Sales Orders', icon: 'receipt_long', section: 'การขาย' },
+  { to: '/installations', label: 'การติดตั้ง', icon: 'local_shipping', section: 'After-Sales' },
+  { to: '/assets', label: 'เครื่องลูกค้า', icon: 'inventory_2', section: 'After-Sales' },
+  { to: '/pm-schedules', label: 'บำรุงรักษา PM', icon: 'build', section: 'After-Sales' },
+  { to: '/tickets', label: 'Service Tickets', icon: 'confirmation_number', section: 'After-Sales' },
   { to: '/customers', label: 'ลูกค้า', icon: 'groups', section: 'Master Data' },
   { to: '/products', label: 'สินค้า', icon: 'fitness_center', section: 'Master Data' },
   { to: '/users', label: 'จัดการผู้ใช้', icon: 'manage_accounts', section: 'ระบบ', adminOnly: true },
@@ -59,7 +63,9 @@ export default function Layout() {
                     }`
                   }
                 >
-                  <span className="material-symbols-outlined !text-[19px]">{item.icon}</span>
+                  <span className="material-symbols-outlined !text-[19px]" aria-hidden="true">
+                    {item.icon}
+                  </span>
                   {item.label}
                 </NavLink>
               ))}

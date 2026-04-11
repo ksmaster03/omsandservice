@@ -160,6 +160,37 @@ const leadRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
+  // ─── GET /leads/demos ─── list demos for calendar view (optional date range)
+  app.get<{ Querystring: { from?: string; to?: string; status?: string } }>(
+    '/demos',
+    async (req, reply) => {
+      const { from, to, status } = req.query;
+      const where: Record<string, unknown> = {};
+      if (from || to) {
+        const range: Record<string, Date> = {};
+        if (from) range.gte = new Date(from);
+        if (to) range.lte = new Date(to);
+        where.scheduledAt = range;
+      }
+      if (status) where.status = status;
+
+      const demos = await prisma.demo.findMany({
+        where,
+        orderBy: { scheduledAt: 'asc' },
+        include: {
+          product: { select: { id: true, name: true, brand: true, sku: true } },
+          lead: {
+            select: {
+              id: true,
+              customer: { select: { id: true, name: true, phone: true } },
+            },
+          },
+        },
+      });
+      return { ok: true, data: demos };
+    },
+  );
+
   // ─── Demo sub-routes ───
   app.post('/demos', { preHandler: [app.requireRole('SALES', 'ADMIN')] }, async (req, reply) => {
     const parsed = createDemoSchema.safeParse(req.body);

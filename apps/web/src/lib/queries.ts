@@ -77,6 +77,35 @@ export async function updateLeadStage(id: string, stage: string, note?: string) 
   return res.data.data as Lead;
 }
 
+export async function listDemos(params: { from?: string; to?: string; status?: string } = {}) {
+  const res = await api.get('/internal/leads/demos', { params });
+  return res.data.data as Demo[];
+}
+
+export async function createDemo(payload: {
+  leadId: string;
+  productId: string;
+  scheduledAt: string;
+  note?: string;
+}) {
+  const res = await api.post('/internal/leads/demos', payload);
+  return res.data.data as Demo;
+}
+
+export interface Demo {
+  id: string;
+  leadId: string;
+  productId: string;
+  scheduledAt: string;
+  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+  note: string | null;
+  product: { id: string; name: string; brand: string; sku: string };
+  lead: {
+    id: string;
+    customer: { id: string; name: string; phone: string | null };
+  };
+}
+
 // ─── Quotations ───
 export async function listQuotations(params: ListParams = {}) {
   const res = await api.get('/internal/quotations', { params });
@@ -103,6 +132,25 @@ export async function createQuotation(payload: {
 export async function updateQuotationStatus(id: string, status: string) {
   const res = await api.post(`/internal/quotations/${id}/status`, { status });
   return res.data.data as Quotation;
+}
+
+/**
+ * Download quotation PDF. Requires auth header so we can't just point
+ * window.open at the URL — fetch the bytes then trigger a download.
+ */
+export async function downloadQuotationPdf(id: string, quoteNo: string): Promise<void> {
+  const res = await api.get(`/internal/quotations/${id}/pdf`, {
+    responseType: 'blob',
+  });
+  const blob = new Blob([res.data], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${quoteNo}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 // ─── Sales Orders ───

@@ -5,6 +5,7 @@ import CustomersPage from './pages/CustomersPage';
 import ProductsPage from './pages/ProductsPage';
 import UsersPage from './pages/UsersPage';
 import LeadsPage from './pages/LeadsPage';
+import DemosPage from './pages/DemosPage';
 import QuotationsPage from './pages/QuotationsPage';
 import SalesOrdersPage from './pages/SalesOrdersPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -30,6 +31,7 @@ export default function App() {
       >
         <Route path="/" element={<DashboardPage />} />
         <Route path="/leads" element={<LeadsPage />} />
+        <Route path="/demos" element={<DemosPage />} />
         <Route path="/quotations" element={<QuotationsPage />} />
         <Route path="/sales-orders" element={<SalesOrdersPage />} />
         <Route path="/customers" element={<CustomersPage />} />

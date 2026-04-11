@@ -8,6 +8,7 @@ import {
 import { prisma } from '../lib/prisma';
 import { paginate, toPrismaPagination } from '../lib/pagination';
 import { nextQuoteNo } from '../lib/doc-no';
+import { renderQuotePdf } from '../lib/pdf';
 
 const quotationRoutes: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', app.authenticate);
@@ -153,6 +154,68 @@ const quotationRoutes: FastifyPluginAsync = async (app) => {
       }
     },
   );
+
+  // ─── GET /quotations/:id/pdf ─── stream quotation PDF
+  app.get<{ Params: { id: string } }>('/:id/pdf', async (req, reply) => {
+    const quote = await prisma.quotation.findUnique({
+      where: { id: req.params.id },
+      include: {
+        customer: true,
+        sales: { select: { name: true, email: true } },
+        items: { include: { product: true }, orderBy: { id: 'asc' } },
+      },
+    });
+    if (!quote) {
+      return reply.code(404).send({ ok: false, error: { code: 'NOT_FOUND', message: 'Quotation not found' } });
+    }
+
+    // Back-compute vat rate from stored values so the template matches what was saved.
+    // subtotal − discount = base; vat = base * rate → rate = vat / base
+    const subtotal = Number(quote.subtotal);
+    const discount = Number(quote.discount);
+    const vat = Number(quote.vat);
+    const base = Math.max(0, subtotal - discount);
+    const vatRate = base > 0 ? Math.round((vat / base) * 100 * 10) / 10 : 0;
+
+    const pdfBuffer = await renderQuotePdf({
+      quoteNo: quote.quoteNo,
+      createdAt: quote.createdAt,
+      validUntil: quote.validUntil,
+      status: quote.status,
+      customer: {
+        name: quote.customer.name,
+        taxId: quote.customer.taxId,
+        address: quote.customer.address,
+        contactName: quote.customer.contactName,
+        phone: quote.customer.phone,
+        email: quote.customer.email,
+      },
+      sales: { name: quote.sales.name, email: quote.sales.email },
+      items: quote.items.map((it) => {
+        const unitPrice = Number(it.unitPrice);
+        const itemDiscount = Number(it.discount);
+        return {
+          name: it.product.name,
+          sku: it.product.sku,
+          qty: it.qty,
+          unitPrice,
+          discount: itemDiscount,
+          lineTotal: it.qty * unitPrice - itemDiscount,
+        };
+      }),
+      subtotal,
+      discount,
+      vatRate,
+      vat,
+      total: Number(quote.total),
+    });
+
+    reply
+      .header('Content-Type', 'application/pdf')
+      .header('Content-Disposition', `inline; filename="${quote.quoteNo}.pdf"`)
+      .header('Content-Length', pdfBuffer.length.toString());
+    return reply.send(pdfBuffer);
+  });
 };
 
 export default quotationRoutes;

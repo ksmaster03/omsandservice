@@ -14,6 +14,7 @@ import leadRoutes from './routes/leads';
 import quotationRoutes from './routes/quotations';
 import salesOrderRoutes from './routes/sales-orders';
 import { prisma } from './lib/prisma';
+import { closeBrowser } from './lib/pdf';
 
 export async function buildServer() {
   const app = Fastify({
@@ -79,6 +80,7 @@ async function start() {
   const closeGracefully = async (signal: string) => {
     app.log.info(`Received ${signal}, closing gracefully...`);
     await app.close();
+    await closeBrowser();
     await prisma.$disconnect();
     process.exit(0);
   };

@@ -8,6 +8,7 @@ import {
   listQuotations,
   createQuotation,
   updateQuotationStatus,
+  downloadQuotationPdf,
   listCustomers,
   listProducts,
   type Quotation,
@@ -198,32 +199,45 @@ export default function QuotationsPage() {
                     {new Date(q.validUntil).toLocaleDateString('th-TH')}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {q.status === 'DRAFT' && (
+                    <div className="flex gap-1 justify-end">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => statusMut.mutate({ id: q.id, status: 'SENT' })}
+                        onClick={() => downloadQuotationPdf(q.id, q.quoteNo)}
+                        title="ดาวน์โหลด PDF"
                       >
-                        ส่งให้ลูกค้า
+                        <span className="material-symbols-outlined !text-[16px]" aria-hidden="true">
+                          picture_as_pdf
+                        </span>
+                        PDF
                       </Button>
-                    )}
-                    {q.status === 'SENT' && (
-                      <div className="flex gap-1 justify-end">
-                        <Button
-                          size="sm"
-                          onClick={() => statusMut.mutate({ id: q.id, status: 'ACCEPTED' })}
-                        >
-                          รับ
-                        </Button>
+                      {q.status === 'DRAFT' && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => statusMut.mutate({ id: q.id, status: 'REJECTED' })}
+                          onClick={() => statusMut.mutate({ id: q.id, status: 'SENT' })}
                         >
-                          ปฏิเสธ
+                          ส่งให้ลูกค้า
                         </Button>
-                      </div>
-                    )}
+                      )}
+                      {q.status === 'SENT' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => statusMut.mutate({ id: q.id, status: 'ACCEPTED' })}
+                          >
+                            รับ
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => statusMut.mutate({ id: q.id, status: 'REJECTED' })}
+                          >
+                            ปฏิเสธ
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

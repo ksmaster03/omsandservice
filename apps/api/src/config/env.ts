@@ -12,6 +12,10 @@ const envSchema = z.object({
 
   CORS_ORIGINS: z.string().default('http://localhost:4110,http://localhost:4120,http://localhost:4130'),
 
+  // Rate limit: max requests per time window (per IP). Set to 0 to disable.
+  RATE_LIMIT_MAX: z.coerce.number().int().min(0).default(200),
+  RATE_LIMIT_WINDOW: z.string().default('1 minute'),
+
   // LINE (stubbed for Sprint 0)
   LINE_CHANNEL_ID: z.string().optional(),
   LINE_CHANNEL_SECRET: z.string().optional(),

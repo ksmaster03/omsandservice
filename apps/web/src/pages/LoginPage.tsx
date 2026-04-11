@@ -45,8 +45,11 @@ export default function LoginPage() {
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">อีเมล</label>
+            <label htmlFor="email" className="block text-xs font-semibold text-gray-600 mb-1">
+              อีเมล
+            </label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -55,8 +58,11 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">รหัสผ่าน</label>
+            <label htmlFor="password" className="block text-xs font-semibold text-gray-600 mb-1">
+              รหัสผ่าน
+            </label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

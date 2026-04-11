@@ -44,6 +44,13 @@ coverage/
 # Uploads (local)
 apps/api/uploads/
 
+# Test artifacts
+playwright-report/
+test-results/
+perf/results.jtl
+perf/report/
+coverage/
+
 # Temp
 tmp/
 temp/

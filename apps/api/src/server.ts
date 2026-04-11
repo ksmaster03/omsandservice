@@ -9,7 +9,7 @@ import healthRoutes from './routes/health';
 import authRoutes from './routes/auth';
 import { prisma } from './lib/prisma';
 
-async function buildServer() {
+export async function buildServer() {
   const app = Fastify({
     logger: isDev
       ? {
@@ -31,7 +31,12 @@ async function buildServer() {
     credentials: true,
   });
   await app.register(sensible);
-  await app.register(rateLimit, { max: 200, timeWindow: '1 minute' });
+  if (env.RATE_LIMIT_MAX > 0) {
+    await app.register(rateLimit, {
+      max: env.RATE_LIMIT_MAX,
+      timeWindow: env.RATE_LIMIT_WINDOW,
+    });
+  }
   await app.register(authPlugin);
 
   // Routes
@@ -54,6 +59,8 @@ async function buildServer() {
 }
 
 async function start() {
+  // Guard: don't auto-start when imported by tests
+  if (process.env.VITEST || process.env.NODE_ENV === 'test') return;
   const app = await buildServer();
 
   // Graceful shutdown

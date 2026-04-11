@@ -1,0 +1,51 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('OMS login flow', () => {
+  test('login page renders with brand elements', async ({ page }) => {
+    await page.goto('/login');
+    await expect(page).toHaveTitle(/NBA Sport OMS/);
+    await expect(page.getByRole('heading', { name: 'NBA Sport OMS' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /เข้าสู่ระบบ/ })).toBeVisible();
+  });
+
+  test('successful login navigates to dashboard', async ({ page }) => {
+    await page.goto('/login');
+
+    // Form is pre-filled with seed credentials in Sprint 0
+    await page.getByRole('button', { name: /เข้าสู่ระบบ/ }).click();
+
+    // Dashboard appears after successful login
+    await expect(page.getByRole('heading', { name: /Sprint 0 สำเร็จ/ })).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByText('Admin Master')).toBeVisible();
+    await expect(page.getByText('ADMIN', { exact: true })).toBeVisible();
+  });
+
+  test('shows error for invalid credentials', async ({ page }) => {
+    await page.goto('/login');
+
+    await page.getByLabel('อีเมล').fill('admin@nbasport.local');
+    await page.getByLabel('รหัสผ่าน').fill('wrongpass');
+    await page.getByRole('button', { name: /เข้าสู่ระบบ/ }).click();
+
+    await expect(page.getByText(/Invalid email or password/)).toBeVisible({ timeout: 5000 });
+  });
+
+  test('logout returns to login page', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByRole('button', { name: /เข้าสู่ระบบ/ }).click();
+    await expect(page.getByRole('heading', { name: /Sprint 0 สำเร็จ/ })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await page.getByRole('button', { name: 'ออกจากระบบ' }).click();
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  test('unauthenticated access to / redirects to login', async ({ page, context }) => {
+    await context.clearCookies();
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/login/);
+  });
+});

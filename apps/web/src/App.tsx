@@ -12,6 +12,9 @@ import InstallationsPage from './pages/InstallationsPage';
 import AssetsPage from './pages/AssetsPage';
 import PmSchedulePage from './pages/PmSchedulePage';
 import ServiceTicketsPage from './pages/ServiceTicketsPage';
+import WarrantyRenewalPage from './pages/WarrantyRenewalPage';
+import WmsSyncLogsPage from './pages/WmsSyncLogsPage';
+import ReportsPage from './pages/ReportsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import { useAuth } from './store/auth';
@@ -42,6 +45,9 @@ export default function App() {
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/pm-schedules" element={<PmSchedulePage />} />
         <Route path="/tickets" element={<ServiceTicketsPage />} />
+        <Route path="/renewals" element={<WarrantyRenewalPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/wms" element={<AdminOnly><WmsSyncLogsPage /></AdminOnly>} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route

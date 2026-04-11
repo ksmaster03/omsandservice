@@ -9,6 +9,7 @@ import {
 import { prisma } from '../lib/prisma';
 import { paginate, toPrismaPagination } from '../lib/pagination';
 import { nextSalesOrderNo } from '../lib/doc-no';
+import { wms, logSync } from '../lib/wms';
 
 const salesOrderRoutes: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', app.authenticate);
@@ -170,7 +171,38 @@ const salesOrderRoutes: FastifyPluginAsync = async (app) => {
         const so = await prisma.salesOrder.update({
           where: { id: req.params.id },
           data: { status: parsed.data.status },
+          include: {
+            customer: true,
+            items: { include: { product: true } },
+          },
         });
+
+        // Auto-push to WMS when status → CONFIRMED (only if not already pushed)
+        if (parsed.data.status === 'CONFIRMED' && !so.wmsOrderId) {
+          try {
+            const result = await logSync('sales_order', 'push', {
+              soNo: so.soNo,
+              customerName: so.customer.name,
+              items: so.items.map((it) => ({ sku: it.product.sku, qty: it.qty })),
+              shippingAddress: so.customer.address ?? undefined,
+            }, () =>
+              wms.pushOrder({
+                soNo: so.soNo,
+                customerName: so.customer.name,
+                items: so.items.map((it) => ({ sku: it.product.sku, qty: it.qty })),
+                shippingAddress: so.customer.address ?? undefined,
+              }),
+            );
+            await prisma.salesOrder.update({
+              where: { id: so.id },
+              data: { wmsOrderId: result.wmsOrderId },
+            });
+          } catch (err) {
+            // Log stays in WmsSyncLog with FAILED status; SO is still CONFIRMED
+            app.log.warn({ err }, 'WMS push failed — SO confirmed locally but not synced');
+          }
+        }
+
         return { ok: true, data: so };
       } catch {
         return reply.code(404).send({ ok: false, error: { code: 'NOT_FOUND', message: 'Sales order not found' } });

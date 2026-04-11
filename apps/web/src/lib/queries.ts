@@ -381,6 +381,123 @@ export async function markMilestonePaid(milestoneId: string) {
   return res.data.data;
 }
 
+// ─── Warranty Renewals (Sprint 4) ───
+export async function listRenewals(params: ListParams = {}) {
+  const res = await api.get('/internal/renewals', { params });
+  return res.data.data as Paginated<Renewal>;
+}
+
+export async function listRenewalCandidates() {
+  const res = await api.get('/internal/renewals/candidates');
+  return res.data.data as RenewalCandidate[];
+}
+
+export async function createRenewalOffer(payload: {
+  assetId: string;
+  type: 'STANDARD' | 'PREMIUM';
+  price: number;
+  extendMonths: number;
+}) {
+  const res = await api.post('/internal/renewals', payload);
+  return res.data.data;
+}
+
+export async function updateRenewalStatus(id: string, status: string) {
+  const res = await api.post(`/internal/renewals/${id}/status`, { status });
+  return res.data.data;
+}
+
+// ─── WMS ───
+export async function getWmsStatus() {
+  const res = await api.get('/internal/wms/status');
+  return res.data.data as { mode: 'mock' | 'live'; connected: string };
+}
+
+export async function listWmsSyncLogs(params: { status?: string; entity?: string; page?: number } = {}) {
+  const res = await api.get('/internal/wms/sync-logs', { params });
+  return res.data.data as Paginated<WmsSyncLog>;
+}
+
+// ─── Reports ───
+export async function getReportsSummary() {
+  const res = await api.get('/internal/reports/summary');
+  return res.data.data as ReportsSummary;
+}
+
+export async function getReportsPipeline() {
+  const res = await api.get('/internal/reports/pipeline');
+  return res.data.data as Record<string, { count: number; totalValue: number }>;
+}
+
+export async function getReportsSalesByBrand() {
+  const res = await api.get('/internal/reports/sales-by-brand');
+  return res.data.data as Record<string, { qty: number; revenue: number }>;
+}
+
+export async function getReportsTicketsByStage() {
+  const res = await api.get('/internal/reports/tickets-by-stage');
+  return res.data.data as Record<string, number>;
+}
+
+// ─── Sprint 4 domain types ───
+export interface Renewal {
+  id: string;
+  assetId: string;
+  type: 'STANDARD' | 'PREMIUM';
+  price: string;
+  status: 'OFFERED' | 'ACCEPTED' | 'PAID' | 'EXPIRED';
+  newEndDate: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  asset: {
+    id: string;
+    serialNo: string;
+    warrantyEnd: string;
+    product: { id: string; name: string; sku: string; brand: string };
+    customer: { id: string; name: string };
+  };
+}
+
+export interface RenewalCandidate {
+  id: string;
+  serialNo: string;
+  warrantyEnd: string;
+  daysLeft: number;
+  product: { id: string; name: string; sku: string; brand: string; price: string };
+  customer: { id: string; name: string; phone: string | null };
+  suggestedPrice: { standard12: number; premium12: number };
+}
+
+export interface WmsSyncLog {
+  id: string;
+  entity: string;
+  action: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'RETRY';
+  errorMsg: string | null;
+  requestJson: unknown;
+  responseJson: unknown;
+  createdAt: string;
+}
+
+export interface ReportsSummary {
+  sales: {
+    customers: number;
+    activeLeads: number;
+    quotesThisMonth: number;
+    soThisMonth: number;
+    revenueThisMonth: number;
+  };
+  operations: {
+    installsPending: number;
+    assetsTotal: number;
+  };
+  afterSales: {
+    ticketsOpen: number;
+    warrantyExpiring60d: number;
+    pmDueSoon60d: number;
+  };
+}
+
 // ─── Sprint 2 domain types ───
 export type LeadStage = 'LEAD' | 'QUALIFIED' | 'DEMO' | 'QUOTE' | 'NEGOTIATION' | 'WON' | 'LOST';
 

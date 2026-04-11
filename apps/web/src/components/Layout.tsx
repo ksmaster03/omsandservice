@@ -11,8 +11,11 @@ const navItems = [
   { to: '/assets', label: 'เครื่องลูกค้า', icon: 'inventory_2', section: 'After-Sales' },
   { to: '/pm-schedules', label: 'บำรุงรักษา PM', icon: 'build', section: 'After-Sales' },
   { to: '/tickets', label: 'Service Tickets', icon: 'confirmation_number', section: 'After-Sales' },
+  { to: '/renewals', label: 'ต่อประกัน', icon: 'autorenew', section: 'After-Sales' },
+  { to: '/reports', label: 'Reports', icon: 'analytics', section: 'Insights' },
   { to: '/customers', label: 'ลูกค้า', icon: 'groups', section: 'Master Data' },
   { to: '/products', label: 'สินค้า', icon: 'fitness_center', section: 'Master Data' },
+  { to: '/wms', label: 'WMS Integration', icon: 'warehouse', section: 'ระบบ', adminOnly: true },
   { to: '/users', label: 'จัดการผู้ใช้', icon: 'manage_accounts', section: 'ระบบ', adminOnly: true },
 ];
 

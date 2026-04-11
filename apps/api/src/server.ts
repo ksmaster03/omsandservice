@@ -19,6 +19,10 @@ import installationRoutes from './routes/installations';
 import assetRoutes from './routes/assets';
 import pmRoutes from './routes/pm-schedules';
 import ticketRoutes from './routes/service-tickets';
+import renewalRoutes from './routes/renewals';
+import wmsRoutes from './routes/wms';
+import reportsRoutes from './routes/reports';
+import techRoutes from './routes/tech';
 import { prisma } from './lib/prisma';
 import { closeBrowser } from './lib/pdf';
 import { getUploadRoot } from './lib/storage';
@@ -81,6 +85,10 @@ export async function buildServer() {
   await app.register(assetRoutes, { prefix: '/api/v1/internal/assets' });
   await app.register(pmRoutes, { prefix: '/api/v1/internal/pm-schedules' });
   await app.register(ticketRoutes, { prefix: '/api/v1/internal/tickets' });
+  await app.register(renewalRoutes, { prefix: '/api/v1/internal/renewals' });
+  await app.register(wmsRoutes, { prefix: '/api/v1/internal/wms' });
+  await app.register(reportsRoutes, { prefix: '/api/v1/internal/reports' });
+  await app.register(techRoutes, { prefix: '/api/v1/tech' });
 
   // Root
   app.get('/', async () => ({

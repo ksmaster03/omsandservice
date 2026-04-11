@@ -10,10 +10,15 @@ Order Management System for NBA Sport (nbasport.co.th), plus customer self-servi
 
 | Path | Name | Purpose | Dev port |
 |---|---|---|---|
-| `apps/api` | `@oms/api` | Fastify backend (REST + webhooks) | 3000 |
-| `apps/web` | `@oms/web` | OMS staff console (Sales/Install/Service/Admin) | 5173 |
-| `apps/customer` | `@oms/customer` | Customer PWA — equipment, ticket, warranty, renewal | 5174 |
-| `apps/tech` | `@oms/tech` | Service technician PWA — jobs, GPS, stage updates | 5175 |
+| `apps/api` | `@oms/api` | Fastify backend (REST + webhooks) | **4100** |
+| `apps/web` | `@oms/web` | OMS staff console (Sales/Install/Service/Admin) | **4110** |
+| `apps/customer` | `@oms/customer` | Customer PWA — equipment, ticket, warranty, renewal | **4120** |
+| `apps/tech` | `@oms/tech` | Service technician PWA — jobs, GPS, stage updates | **4130** |
+
+> Ports chosen in the `41xx` block to avoid conflicts with common defaults
+> (Vite 5173, Node 3000, Rails/Postgres 3001/5432, php-fpm 9000, etc.).
+> All dev servers use `strictPort` — they fail fast instead of silently
+> picking the next free port.
 
 ## Packages
 
@@ -60,10 +65,10 @@ pnpm dev
 
 Or individually:
 ```bash
-pnpm dev:api       # http://localhost:3000
-pnpm dev:web       # http://localhost:5173
-pnpm dev:customer  # http://localhost:5174
-pnpm dev:tech      # http://localhost:5175
+pnpm dev:api       # http://localhost:4100
+pnpm dev:web       # http://localhost:4110
+pnpm dev:customer  # http://localhost:4120
+pnpm dev:tech      # http://localhost:4130
 ```
 
 ### Default seed credentials

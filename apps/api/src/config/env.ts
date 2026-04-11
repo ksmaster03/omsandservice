@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(3000),
+  PORT: z.coerce.number().int().positive().default(4100),
   HOST: z.string().default('0.0.0.0'),
 
   DATABASE_URL: z.string().url(),
@@ -10,7 +10,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
 
-  CORS_ORIGINS: z.string().default('http://localhost:5173,http://localhost:5174,http://localhost:5175'),
+  CORS_ORIGINS: z.string().default('http://localhost:4110,http://localhost:4120,http://localhost:4130'),
 
   // LINE (stubbed for Sprint 0)
   LINE_CHANNEL_ID: z.string().optional(),

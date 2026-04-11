@@ -54,3 +54,7 @@ coverage/
 # Temp
 tmp/
 temp/
+
+# Production secrets (never commit)
+.secrets/
+

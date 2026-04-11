@@ -1,0 +1,12 @@
+{
+  "name": "@oms/config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    "./tailwind": "./tailwind.preset.js",
+    "./tsconfig-react": "./tsconfig.react.json",
+    "./tsconfig-node": "./tsconfig.node.json"
+  }
+}

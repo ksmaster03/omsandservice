@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    @apply h-full;
+    font-family: 'Sarabun', system-ui, sans-serif;
+  }
+  body {
+    @apply bg-gray-50 text-gray-800;
+  }
+}

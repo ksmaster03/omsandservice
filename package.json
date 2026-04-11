@@ -1,0 +1,49 @@
+{
+  "name": "omsandservice",
+  "version": "0.0.1",
+  "private": true,
+  "description": "NBA Sport — Order Management System + Customer PWA + Service Tech PWA",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "dev:api": "pnpm --filter @oms/api run dev",
+    "dev:web": "pnpm --filter @oms/web run dev",
+    "dev:customer": "pnpm --filter @oms/customer run dev",
+    "dev:tech": "pnpm --filter @oms/tech run dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "db:generate": "pnpm --filter @oms/api run db:generate",
+    "db:migrate": "pnpm --filter @oms/api run db:migrate",
+    "db:seed": "pnpm --filter @oms/api run db:seed",
+    "db:studio": "pnpm --filter @oms/api run db:studio",
+    "db:reset": "pnpm --filter @oms/api run db:reset",
+    "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css}": [
+      "prettier --write"
+    ]
+  }
+}

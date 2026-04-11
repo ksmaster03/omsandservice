@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-body: 'Sarabun', system-ui, sans-serif;
+    --font-display: 'Barlow', system-ui, sans-serif;
+  }
+  html,
+  body {
+    @apply h-full;
+    font-family: var(--font-body);
+  }
+  body {
+    @apply bg-gray-50 text-gray-800;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}

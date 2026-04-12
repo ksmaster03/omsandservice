@@ -10,7 +10,7 @@ export interface TechUser {
 export interface TechTicket {
   id: string;
   ticketNo: string;
-  problemType: 'BELT' | 'NOISE' | 'CONSOLE' | 'MOTOR' | 'POWER' | 'OTHER';
+  problemType: 'BELT' | 'NOISE' | 'CONSOLE' | 'MOTOR' | 'POWER' | 'PM' | 'OTHER';
   priority: 'URGENT' | 'NORMAL' | 'LOW';
   description: string;
   stage: 'RECEIVED' | 'ASSIGNED' | 'EN_ROUTE' | 'ARRIVED' | 'REPAIRING' | 'CLOSED' | 'CANCELLED';
@@ -61,4 +61,21 @@ export async function pingLocation(lat: number, lng: number, activeTicketId?: st
 export async function getTechSettings() {
   const res = await api.get('/tech/settings');
   return res.data.data as Record<string, string>;
+}
+
+export interface TechPmJob {
+  id: string;
+  scheduledAt: string;
+  status: string;
+  asset: {
+    id: string;
+    serialNo: string;
+    customer: { id: string; name: string; phone: string | null };
+    product: { id: string; name: string; sku: string; pmIntervalMonths: number };
+  };
+}
+
+export async function getMyPmJobs() {
+  const res = await api.get('/tech/me/pm');
+  return res.data.data as TechPmJob[];
 }

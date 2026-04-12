@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
@@ -44,6 +45,7 @@ interface LineItem {
 }
 
 export default function QuotationsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | ''>('');
   const [openCreate, setOpenCreate] = useState(false);
@@ -127,8 +129,8 @@ export default function QuotationsPage() {
   return (
     <>
       <PageHeader
-        title="ใบเสนอราคา"
-        subtitle="สร้างและติดตามใบเสนอราคา"
+        title={t('quotations.title')}
+        subtitle={t('quotations.subtitle')}
         action={
           <Button onClick={() => setOpenCreate(true)}>
             <span className="material-symbols-outlined !text-[18px]">add</span>

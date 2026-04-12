@@ -6,12 +6,14 @@
  * critical security boundary for the PWA.
  */
 import type { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
 import {
   customerCreateTicketSchema,
   warrantyStatus,
+  RMA_REASONS,
 } from '@oms/shared';
 import { prisma } from '../lib/prisma';
-import { nextTicketNo } from '../lib/doc-no';
+import { nextTicketNo, nextRmaNo, makeBusinessKey } from '../lib/doc-no';
 
 const customerDataRoutes: FastifyPluginAsync = async (app) => {
   // Every route requires a customer session
@@ -172,6 +174,75 @@ const customerDataRoutes: FastifyPluginAsync = async (app) => {
     } catch {
       return reply.code(404).send({ ok: false, error: { code: 'NOT_FOUND', message: 'Notification not found' } });
     }
+  });
+
+  // ─── GET /customer/rmas ─── my return requests
+  app.get('/rmas', async (req) => {
+    const { customerId } = req.customerSession!;
+    const items = await prisma.rma.findMany({
+      where: { customerId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        asset: {
+          select: {
+            id: true,
+            serialNo: true,
+            product: { select: { id: true, name: true, sku: true } },
+          },
+        },
+      },
+    });
+    return { ok: true, data: items };
+  });
+
+  // ─── POST /customer/rmas ─── customer-initiated return request
+  const customerCreateRmaSchema = z.object({
+    assetId: z.string().uuid(),
+    reason: z.enum(RMA_REASONS),
+    description: z.string().min(5).max(2000),
+  });
+  app.post('/rmas', async (req, reply) => {
+    const parsed = customerCreateRmaSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: 'VALIDATION', message: 'Invalid input', details: parsed.error.flatten() },
+      });
+    }
+    const { customerId } = req.customerSession!;
+
+    // Asset must belong to this customer
+    const asset = await prisma.asset.findFirst({
+      where: { id: parsed.data.assetId, customerId },
+    });
+    if (!asset) {
+      return reply.code(403).send({
+        ok: false,
+        error: { code: 'NOT_YOUR_ASSET', message: 'Asset not linked to your account' },
+      });
+    }
+
+    const rmaNo = await nextRmaNo();
+    const businessKey = makeBusinessKey('rma', rmaNo);
+    const rma = await prisma.rma.create({
+      data: {
+        rmaNo,
+        businessKey,
+        customerId,
+        assetId: parsed.data.assetId,
+        soId: asset.soId,
+        reason: parsed.data.reason,
+        description: parsed.data.description,
+        stage: 'REQUESTED',
+        events: {
+          create: {
+            stage: 'REQUESTED',
+            note: 'แจ้งผ่าน Customer PWA',
+          },
+        },
+      },
+    });
+    return reply.code(201).send({ ok: true, data: rma });
   });
 
   // ─── GET /customer/renewals ─── my warranty renewal offers

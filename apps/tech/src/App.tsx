@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { login, getMe, logout, getMyTickets, updateTicketStage, getTechSettings, type TechTicket } from './lib/queries';
+import { useTranslation } from 'react-i18next';
+import { login, getMe, logout, getMyTickets, getMyPmJobs, updateTicketStage, getTechSettings, type TechTicket, type TechPmJob } from './lib/queries';
 import { useAuth } from './store/auth';
 import { useGpsTracker, openGoogleMapsNavigation } from './hooks/useGpsTracker';
+import { useTechSocket } from './hooks/useTechSocket';
+import ServerStatus from './components/ServerStatus';
+import LanguageSwitcher from './components/LanguageSwitcher';
+import FeedbackButton from './components/FeedbackButton';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
 // ────────── Login ──────────
 function LoginScreen() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const setUser = useAuth((s) => s.setUser);
   const [email, setEmail] = useState('');
@@ -28,26 +34,32 @@ function LoginScreen() {
       const msg =
         (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ??
         (err as Error).message;
-      setError(msg ?? 'เข้าสู่ระบบไม่สำเร็จ');
+      setError(msg ?? t('auth.loginFailed'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6 relative">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher dark />
+      </div>
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-80 max-w-[calc(100%-2rem)]">
+        <ServerStatus />
+      </div>
       <div className="w-full max-w-sm bg-white/10 rounded-brand-lg p-6 backdrop-blur-sm">
         <div className="text-center mb-5">
           <div className="inline-flex w-14 h-14 rounded-brand-lg bg-brand-gold text-brand-navy items-center justify-center mb-3">
             <span className="material-symbols-outlined !text-3xl" aria-hidden="true">build</span>
           </div>
-          <h1 className="font-display font-black text-xl">NBA Sport Tech</h1>
-          <p className="text-xs text-white/60 mt-0.5">สำหรับทีมติดตั้ง + บริการ</p>
+          <h1 className="font-display font-black text-xl">{t('auth.appName')}</h1>
+          <p className="text-xs text-white/60 mt-0.5">{t('auth.tagline')}</p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label htmlFor="t-email" className="block text-xs font-semibold text-white/70 mb-1">อีเมล</label>
+            <label htmlFor="t-email" className="block text-xs font-semibold text-white/70 mb-1">{t('auth.email')}</label>
             <input
               id="t-email"
               type="email"
@@ -58,7 +70,7 @@ function LoginScreen() {
             />
           </div>
           <div>
-            <label htmlFor="t-pw" className="block text-xs font-semibold text-white/70 mb-1">รหัสผ่าน</label>
+            <label htmlFor="t-pw" className="block text-xs font-semibold text-white/70 mb-1">{t('auth.password')}</label>
             <input
               id="t-pw"
               type="password"
@@ -76,7 +88,7 @@ function LoginScreen() {
             disabled={loading}
             className="w-full py-2.5 bg-brand-gold text-brand-navy font-semibold rounded-brand disabled:opacity-50"
           >
-            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+            {loading ? t('auth.loggingIn') : t('auth.login')}
           </button>
         </form>
       </div>
@@ -91,46 +103,39 @@ const PRIORITY_COLOR: Record<TechTicket['priority'], string> = {
   LOW: 'bg-status-success text-white',
 };
 
-const PROBLEM_LABEL: Record<TechTicket['problemType'], string> = {
-  BELT: 'สายพาน',
-  NOISE: 'เสียงดัง',
-  CONSOLE: 'Console',
-  MOTOR: 'มอเตอร์',
-  POWER: 'ไฟ/ไม่เปิดติด',
-  OTHER: 'อื่นๆ',
-};
-
-const NEXT_STAGE: Record<string, { stage: string; label: string } | null> = {
-  ASSIGNED: { stage: 'EN_ROUTE', label: 'เริ่มเดินทาง' },
-  EN_ROUTE: { stage: 'ARRIVED', label: 'ถึงหน้างานแล้ว' },
-  ARRIVED: { stage: 'REPAIRING', label: 'เริ่มซ่อม' },
-  REPAIRING: { stage: 'CLOSED', label: 'ปิดงาน' },
-  RECEIVED: { stage: 'EN_ROUTE', label: 'เริ่มเดินทาง' },
+// Stage transition map (label resolved via t() inside TicketCard).
+const NEXT_STAGE: Record<string, { stage: string; labelKey: string } | null> = {
+  ASSIGNED: { stage: 'EN_ROUTE', labelKey: 'EN_ROUTE' },
+  EN_ROUTE: { stage: 'ARRIVED', labelKey: 'ARRIVED' },
+  ARRIVED: { stage: 'REPAIRING', labelKey: 'REPAIRING' },
+  REPAIRING: { stage: 'CLOSED', labelKey: 'CLOSED' },
+  RECEIVED: { stage: 'EN_ROUTE', labelKey: 'EN_ROUTE' },
   CLOSED: null,
   CANCELLED: null,
 };
 
-function TicketCard({ t }: { t: TechTicket }) {
+function TicketCard({ ticket }: { ticket: TechTicket }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
-  const next = NEXT_STAGE[t.stage];
+  const next = NEXT_STAGE[ticket.stage];
 
   const stageMut = useMutation({
-    mutationFn: () => updateTicketStage(t.id, next!.stage),
+    mutationFn: () => updateTicketStage(ticket.id, next!.stage),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-tickets'] }),
   });
 
   function navigate() {
-    if (t.locationLat && t.locationLng) {
-      openGoogleMapsNavigation(Number(t.locationLat), Number(t.locationLng));
-    } else if (t.customer.address) {
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(t.customer.address)}&travelmode=driving`;
+    if (ticket.locationLat && ticket.locationLng) {
+      openGoogleMapsNavigation(Number(ticket.locationLat), Number(ticket.locationLng));
+    } else if (ticket.customer.address) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ticket.customer.address)}&travelmode=driving`;
       window.open(url, '_blank', 'noopener,noreferrer');
     }
   }
 
   function call() {
-    if (t.customer.phone) {
-      window.location.href = `tel:${t.customer.phone}`;
+    if (ticket.customer.phone) {
+      window.location.href = `tel:${ticket.customer.phone}`;
     }
   }
 
@@ -138,41 +143,41 @@ function TicketCard({ t }: { t: TechTicket }) {
     <div className="bg-white text-brand-navy rounded-brand-lg p-4 shadow-brand-md">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <div className="font-mono text-[11px] text-gray-500">{t.ticketNo}</div>
-          <div className="font-display font-black text-lg">{t.customer.name}</div>
+          <div className="font-mono text-[11px] text-gray-500">{ticket.ticketNo}</div>
+          <div className="font-display font-black text-lg">{ticket.customer.name}</div>
         </div>
-        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLOR[t.priority]}`}>
-          {t.priority}
+        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLOR[ticket.priority]}`}>
+          {t(`ticket.priority.${ticket.priority}`)}
         </span>
       </div>
 
       <div className="text-xs text-gray-600 mb-2">
-        <div className="font-semibold">{PROBLEM_LABEL[t.problemType]} · {t.asset.product.name}</div>
-        <div className="font-mono text-[10px]">{t.asset.serialNo}</div>
+        <div className="font-semibold">{t(`ticket.problem.${ticket.problemType}`)} · {ticket.asset.product.name}</div>
+        <div className="font-mono text-[10px]">{ticket.asset.serialNo}</div>
       </div>
 
-      <div className="text-xs text-gray-700 bg-gray-50 rounded p-2 mb-3">{t.description}</div>
+      <div className="text-xs text-gray-700 bg-gray-50 rounded p-2 mb-3">{ticket.description}</div>
 
-      {t.locationDetail && (
-        <div className="text-[11px] text-gray-500 mb-3">📍 {t.locationDetail}</div>
+      {ticket.locationDetail && (
+        <div className="text-[11px] text-gray-500 mb-3">📍 {ticket.locationDetail}</div>
       )}
 
       <div className="grid grid-cols-2 gap-2 mb-2">
         <button
           onClick={navigate}
-          disabled={!t.locationLat && !t.customer.address}
+          disabled={!ticket.locationLat && !ticket.customer.address}
           className="py-2.5 bg-brand-navy text-white text-xs font-semibold rounded-brand disabled:opacity-40 flex items-center justify-center gap-1"
         >
           <span className="material-symbols-outlined !text-[18px]" aria-hidden="true">directions</span>
-          นำทาง
+          {t('ticket.navigate')}
         </button>
         <button
           onClick={call}
-          disabled={!t.customer.phone}
+          disabled={!ticket.customer.phone}
           className="py-2.5 bg-status-success text-white text-xs font-semibold rounded-brand disabled:opacity-40 flex items-center justify-center gap-1"
         >
           <span className="material-symbols-outlined !text-[18px]" aria-hidden="true">call</span>
-          โทรหาลูกค้า
+          {t('ticket.callCustomer')}
         </button>
       </div>
 
@@ -182,26 +187,35 @@ function TicketCard({ t }: { t: TechTicket }) {
           disabled={stageMut.isPending}
           className="w-full py-3 bg-brand-red text-white font-bold rounded-brand disabled:opacity-50"
         >
-          → {next.label}
+          → {t(`ticket.nextStage.${next.labelKey}`)}
         </button>
       )}
-      {!next && t.stage === 'CLOSED' && (
-        <div className="text-center text-xs font-semibold text-status-success py-2">✓ ปิดงานแล้ว</div>
+      {!next && ticket.stage === 'CLOSED' && (
+        <div className="text-center text-xs font-semibold text-status-success py-2">{t('ticket.closed')}</div>
       )}
     </div>
   );
 }
 
 function HomeScreen() {
+  const { t } = useTranslation();
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [gpsEnabled, setGpsEnabled] = useState(false);
 
+  // Real-time push via WebSocket — invalidates my-tickets on assignment/stage change
+  useTechSocket(!!user);
+
   const { data: tickets, isLoading } = useQuery({
     queryKey: ['my-tickets'],
     queryFn: getMyTickets,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
+  });
+  const { data: pmJobs } = useQuery({
+    queryKey: ['my-pm'],
+    queryFn: getMyPmJobs,
+    refetchInterval: 120_000,
   });
   const { data: settings } = useQuery({
     queryKey: ['tech-settings'],
@@ -229,42 +243,87 @@ function HomeScreen() {
       <header className="bg-white/10 px-4 py-3 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
-            <div className="font-display font-black text-base">NBA Sport Tech</div>
+            <div className="font-display font-black text-base">{t('home.appName')}</div>
             <div className="text-[10px] text-white/60">{user?.name} · {user?.role}</div>
           </div>
-          <button
-            onClick={doLogout}
-            aria-label="ออกจากระบบ"
-            className="p-2 rounded hover:bg-white/10"
-          >
-            <span className="material-symbols-outlined !text-[20px]" aria-hidden="true">logout</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher dark />
+            <button
+              onClick={doLogout}
+              aria-label={t('auth.logout')}
+              className="p-2 rounded hover:bg-white/10"
+            >
+              <span className="material-symbols-outlined !text-[20px]" aria-hidden="true">logout</span>
+            </button>
+          </div>
         </div>
 
         <div className="mt-2 flex items-center justify-between bg-white/5 rounded-brand px-3 py-1.5 text-[11px]">
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${gpsEnabled && !gpsError ? 'bg-status-success animate-pulse' : 'bg-gray-500'}`}></span>
-            GPS: {gpsEnabled ? (gpsError ? 'error' : lastPing ? `ping ${Math.floor((Date.now() - lastPing.getTime()) / 1000)}s ago` : 'starting...') : 'off'}
+            {t('home.gps')}: {gpsEnabled
+              ? (gpsError
+                  ? t('home.gpsError')
+                  : lastPing
+                    ? t('home.gpsAgo', { seconds: Math.floor((Date.now() - lastPing.getTime()) / 1000) })
+                    : t('home.gpsStarting'))
+              : 'off'}
           </div>
           <button
             onClick={() => setGpsEnabled((v) => !v)}
             className={`px-2 py-0.5 rounded text-[10px] font-bold ${gpsEnabled ? 'bg-status-success text-white' : 'bg-white/20 text-white'}`}
           >
-            {gpsEnabled ? 'ON' : 'OFF'}
+            {gpsEnabled ? t('home.gpsOn') : t('home.gpsOff')}
           </button>
         </div>
         {gpsError && <div className="text-[10px] text-brand-red mt-1">{gpsError}</div>}
       </header>
 
       <main className="p-4 space-y-3">
-        {isLoading && <div className="text-center text-white/60 py-10 text-sm">กำลังโหลด...</div>}
+        {isLoading && <div className="text-center text-white/60 py-10 text-sm">{t('common.loading')}</div>}
         {!isLoading && tickets?.length === 0 && (
           <div className="text-center py-10 text-white/60 text-sm">
             <div className="text-4xl mb-2">✅</div>
-            ไม่มีงานค้าง
+            {t('home.noTickets')}
           </div>
         )}
-        {tickets?.map((t) => <TicketCard key={t.id} t={t} />)}
+        {tickets?.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)}
+
+        {/* PM Schedule section */}
+        {pmJobs && pmJobs.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 pt-4">
+              <span className="material-symbols-outlined !text-[20px] text-brand-gold" aria-hidden="true">build</span>
+              <span className="font-display font-bold text-sm">PM ({pmJobs.length})</span>
+            </div>
+            {pmJobs.map((pm: TechPmJob) => (
+              <div key={pm.id} className="bg-white text-brand-navy rounded-brand-lg p-4 shadow-brand-md">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="font-display font-black text-lg">{pm.asset.customer.name}</div>
+                    <div className="text-xs text-gray-600 font-semibold">{pm.asset.product.name}</div>
+                    <div className="font-mono text-[10px] text-gray-500">{pm.asset.serialNo}</div>
+                  </div>
+                  <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-gold text-brand-navy">
+                    PM
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 mb-2">
+                  {t('installations.scheduledLabel')}: {new Date(pm.scheduledAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </div>
+                {pm.asset.customer.phone && (
+                  <button
+                    onClick={() => { window.location.href = `tel:${pm.asset.customer.phone}`; }}
+                    className="w-full py-2.5 bg-status-success text-white text-xs font-semibold rounded-brand flex items-center justify-center gap-1"
+                  >
+                    <span className="material-symbols-outlined !text-[18px]" aria-hidden="true">call</span>
+                    {t('ticket.callCustomer')}
+                  </button>
+                )}
+              </div>
+            ))}
+          </>
+        )}
       </main>
     </div>
   );
@@ -311,6 +370,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AppRoutes />
+        <FeedbackButton source="tech" />
       </BrowserRouter>
     </QueryClientProvider>
   );

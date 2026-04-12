@@ -8,8 +8,10 @@ import {
 } from '@oms/shared';
 import { prisma } from '../lib/prisma';
 import { paginate, toPrismaPagination } from '../lib/pagination';
-import { nextSalesOrderNo } from '../lib/doc-no';
+import { nextSalesOrderNo, makeBusinessKey } from '../lib/doc-no';
 import { wms, logSync } from '../lib/wms';
+import { reserveForOrder, releaseForOrder, StockShortfallError } from '../lib/stock';
+import { bus } from '../lib/events';
 
 const salesOrderRoutes: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', app.authenticate);
@@ -44,6 +46,7 @@ const salesOrderRoutes: FastifyPluginAsync = async (app) => {
           customer: { select: { id: true, name: true } },
           _count: { select: { items: true, milestones: true } },
           milestones: { select: { status: true } },
+          installation: { select: { id: true, status: true, scheduledAt: true } },
         },
       }),
       prisma.salesOrder.count({ where }),
@@ -118,12 +121,14 @@ const salesOrderRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const soNo = await nextSalesOrderNo();
+      const businessKey = makeBusinessKey('so', soNo);
       const totalNum = Number(quote.total);
       const milestones = buildMilestones(totalNum, parsed.data.milestoneTemplate);
 
       const so = await prisma.salesOrder.create({
         data: {
           soNo,
+          businessKey,
           quotationId: quote.id,
           customerId: quote.customerId,
           total: quote.total,
@@ -168,6 +173,50 @@ const salesOrderRoutes: FastifyPluginAsync = async (app) => {
         });
       }
       try {
+        // Load current state before mutation so we can detect transitions
+        const before = await prisma.salesOrder.findUnique({
+          where: { id: req.params.id },
+          include: { items: { select: { id: true, productId: true, qty: true } } },
+        });
+        if (!before) {
+          return reply.code(404).send({ ok: false, error: { code: 'NOT_FOUND', message: 'Sales order not found' } });
+        }
+
+        // Reserve stock when transitioning INTO CONFIRMED
+        const transitioningToConfirmed =
+          parsed.data.status === 'CONFIRMED' && before.status !== 'CONFIRMED';
+        if (transitioningToConfirmed) {
+          try {
+            await reserveForOrder(
+              before.id,
+              before.items.map((it) => ({
+                soItemId: it.id,
+                productId: it.productId,
+                qty: it.qty,
+              })),
+            );
+          } catch (err) {
+            if (err instanceof StockShortfallError) {
+              return reply.code(409).send({
+                ok: false,
+                error: {
+                  code: 'STOCK_SHORTFALL',
+                  message: `Insufficient stock: product ${err.productId} requested ${err.requested}, available ${err.available}`,
+                  productId: err.productId,
+                  requested: err.requested,
+                  available: err.available,
+                },
+              });
+            }
+            throw err;
+          }
+        }
+
+        // Release stock when transitioning INTO CANCELLED
+        if (parsed.data.status === 'CANCELLED' && before.status !== 'CANCELLED') {
+          await releaseForOrder(before.id, 'SO cancelled');
+        }
+
         const so = await prisma.salesOrder.update({
           where: { id: req.params.id },
           data: { status: parsed.data.status },
@@ -176,6 +225,22 @@ const salesOrderRoutes: FastifyPluginAsync = async (app) => {
             items: { include: { product: true } },
           },
         });
+
+        if (transitioningToConfirmed) {
+          bus.emit('order.confirmed', {
+            soId: so.id,
+            soNo: so.soNo,
+            customerId: so.customerId,
+            total: Number(so.total),
+          });
+        }
+        if (parsed.data.status === 'CANCELLED' && before.status !== 'CANCELLED') {
+          bus.emit('order.cancelled', {
+            soId: so.id,
+            soNo: so.soNo,
+            customerId: so.customerId,
+          });
+        }
 
         // Auto-push to WMS when status → CONFIRMED (only if not already pushed)
         if (parsed.data.status === 'CONFIRMED' && !so.wmsOrderId) {

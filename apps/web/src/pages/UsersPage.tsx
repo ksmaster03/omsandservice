@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
@@ -24,6 +25,7 @@ const roleColor: Record<Role, string> = {
 };
 
 export default function UsersPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<Role | ''>('');
@@ -69,12 +71,12 @@ export default function UsersPage() {
   return (
     <>
       <PageHeader
-        title="จัดการผู้ใช้"
-        subtitle="สำหรับ Admin เท่านั้น — สร้างและจัดการบัญชีพนักงาน"
+        title={t('users.title')}
+        subtitle={t('users.subtitle')}
         action={
           <Button onClick={() => setOpenCreate(true)}>
             <span className="material-symbols-outlined !text-[18px]">person_add</span>
-            เพิ่มผู้ใช้
+            {t('users.addButton')}
           </Button>
         }
       />

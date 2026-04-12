@@ -1,14 +1,18 @@
 import { NavLink } from 'react-router-dom';
-
-const items = [
-  { to: '/', label: 'หน้าหลัก', icon: 'home' },
-  { to: '/equipment', label: 'เครื่อง', icon: 'fitness_center' },
-  { to: '/report', label: 'แจ้งซ่อม', icon: 'build', primary: true },
-  { to: '/tickets', label: 'Ticket', icon: 'confirmation_number' },
-  { to: '/profile', label: 'บัญชี', icon: 'person' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function BottomNav() {
+  const { t } = useTranslation();
+
+  const items = [
+    { to: '/', label: t('nav.home'), icon: 'home' },
+    { to: '/equipment', label: t('nav.equipment'), icon: 'fitness_center' },
+    { to: '/report', label: t('nav.report'), icon: 'build', primary: true },
+    { to: '/tickets', label: t('nav.tickets'), icon: 'confirmation_number' },
+    { to: '/renewals', label: t('nav.home') === 'Home' ? 'Warranty' : 'ประกัน', icon: 'verified' },
+    { to: '/profile', label: t('nav.profile'), icon: 'person' },
+  ];
+
   return (
     <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-30 safe-area-bottom">
       <div className="flex items-end justify-around max-w-md mx-auto px-2 py-1.5">

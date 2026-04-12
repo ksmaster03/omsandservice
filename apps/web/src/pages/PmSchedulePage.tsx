@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
 import { listPmSchedules, assignPm, completePm, listUsers, type PmScheduleItem } from '../lib/queries';
+import { downloadIcs, type IcsEvent } from '../lib/ics';
 
 const STATUS_COLOR: Record<PmScheduleItem['status'], string> = {
   PENDING: 'bg-gray-100 text-gray-600',
@@ -23,6 +25,7 @@ const STATUS_LABEL: Record<PmScheduleItem['status'], string> = {
 };
 
 export default function PmSchedulePage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [completeModal, setCompleteModal] = useState<PmScheduleItem | null>(null);
@@ -56,8 +59,30 @@ export default function PmSchedulePage() {
   return (
     <>
       <PageHeader
-        title="บำรุงรักษา (PM)"
-        subtitle="ตารางงานบำรุงรักษา — เสร็จแล้วระบบจะ gen รอบถัดไปอัตโนมัติ"
+        title={t('pmSchedules.title')}
+        subtitle={t('pmSchedules.subtitle')}
+        action={
+          <Button
+            variant="outline"
+            onClick={() => {
+              const items = data?.items;
+              if (!items?.length) return;
+              const events: IcsEvent[] = items
+                .filter((pm: PmScheduleItem) => pm.status !== 'COMPLETED' && pm.status !== 'SKIPPED')
+                .map((pm: PmScheduleItem) => ({
+                  uid: `pm-${pm.id}@toptier-osm`,
+                  title: `PM: ${pm.asset.product.name} — ${pm.asset.customer.name}`,
+                  description: `S/N: ${pm.asset.serialNo}${pm.tech ? `\nช่าง: ${pm.tech.name}` : ''}`,
+                  start: new Date(pm.scheduledAt),
+                  allDay: true,
+                }));
+              downloadIcs(events, 'pm-schedules.ics');
+            }}
+          >
+            <span className="material-symbols-outlined !text-[18px]">download</span>
+            .ics
+          </Button>
+        }
       />
 
       <div className="p-6">

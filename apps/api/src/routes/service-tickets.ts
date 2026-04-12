@@ -6,12 +6,15 @@ import {
   PROBLEM_TYPES,
   PRIORITIES,
   TICKET_STAGES,
+  canTransition,
+  type TicketStage,
 } from '@oms/shared';
 import { prisma } from '../lib/prisma';
 import { paginate, toPrismaPagination } from '../lib/pagination';
 import { listQuerySchema } from '@oms/shared';
-import { nextTicketNo } from '../lib/doc-no';
+import { nextTicketNo, makeBusinessKey } from '../lib/doc-no';
 import { saveUpload, isAllowedImage } from '../lib/storage';
+import { bus } from '../lib/events';
 
 const ticketListQuerySchema = listQuerySchema.extend({
   stage: z.enum(TICKET_STAGES).optional(),
@@ -130,6 +133,7 @@ const ticketRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const ticketNo = await nextTicketNo();
+    const businessKey = makeBusinessKey('tk', ticketNo);
     const slaDueAt = new Date(
       Date.now() + slaHoursByPriority[input.priority]! * 60 * 60 * 1000,
     );
@@ -137,6 +141,7 @@ const ticketRoutes: FastifyPluginAsync = async (app) => {
     const ticket = await prisma.serviceTicket.create({
       data: {
         ticketNo,
+        businessKey,
         customerId: input.customerId,
         assetId: input.assetId,
         problemType: input.problemType,
@@ -160,6 +165,13 @@ const ticketRoutes: FastifyPluginAsync = async (app) => {
         customer: { select: { id: true, name: true } },
         asset: { include: { product: { select: { id: true, name: true } } } },
       },
+    });
+    bus.emit('ticket.created', {
+      ticketId: ticket.id,
+      ticketNo: ticket.ticketNo,
+      customerId: ticket.customerId,
+      problemType: ticket.problemType,
+      priority: ticket.priority,
     });
     return reply.code(201).send({ ok: true, data: ticket });
   });
@@ -191,6 +203,12 @@ const ticketRoutes: FastifyPluginAsync = async (app) => {
             },
           },
         });
+        bus.emit('ticket.assigned', {
+          ticketId: ticket.id,
+          ticketNo: ticket.ticketNo,
+          techId: parsed.data.techId,
+          customerId: ticket.customerId,
+        });
         return { ok: true, data: ticket };
       } catch {
         return reply.code(404).send({ ok: false, error: { code: 'NOT_FOUND', message: 'Ticket not found' } });
@@ -210,6 +228,26 @@ const ticketRoutes: FastifyPluginAsync = async (app) => {
           error: { code: 'VALIDATION', message: 'Invalid input', details: parsed.error.flatten() },
         });
       }
+      // Load current stage for machine validation
+      const current = await prisma.serviceTicket.findUnique({
+        where: { id: req.params.id },
+        select: { stage: true },
+      });
+      if (!current) {
+        return reply.code(404).send({ ok: false, error: { code: 'NOT_FOUND', message: 'Ticket not found' } });
+      }
+      if (!canTransition(current.stage as TicketStage, parsed.data.stage as TicketStage)) {
+        return reply.code(409).send({
+          ok: false,
+          error: {
+            code: 'INVALID_TRANSITION',
+            message: `Invalid transition: ${current.stage} → ${parsed.data.stage}`,
+            from: current.stage,
+            to: parsed.data.stage,
+          },
+        });
+      }
+
       try {
         const data: Record<string, unknown> = {
           stage: parsed.data.stage,
@@ -228,6 +266,20 @@ const ticketRoutes: FastifyPluginAsync = async (app) => {
           where: { id: req.params.id },
           data,
         });
+        bus.emit('ticket.stage_changed', {
+          ticketId: ticket.id,
+          ticketNo: ticket.ticketNo,
+          from: current.stage,
+          to: parsed.data.stage,
+        });
+        if (parsed.data.stage === 'CLOSED') {
+          bus.emit('ticket.closed', {
+            ticketId: ticket.id,
+            ticketNo: ticket.ticketNo,
+            customerId: ticket.customerId,
+            techId: ticket.assignedTechId,
+          });
+        }
         return { ok: true, data: ticket };
       } catch {
         return reply.code(404).send({ ok: false, error: { code: 'NOT_FOUND', message: 'Ticket not found' } });

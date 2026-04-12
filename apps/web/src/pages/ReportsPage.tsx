@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import {
   getReportsSummary,
@@ -64,6 +65,7 @@ function BarRow({ label, value, max, color }: { label: string; value: number; ma
 }
 
 export default function ReportsPage() {
+  const { t } = useTranslation();
   const summary = useQuery({ queryKey: ['reports', 'summary'], queryFn: getReportsSummary });
   const pipeline = useQuery({ queryKey: ['reports', 'pipeline'], queryFn: getReportsPipeline });
   const salesByBrand = useQuery({ queryKey: ['reports', 'sales-by-brand'], queryFn: getReportsSalesByBrand });
@@ -82,7 +84,7 @@ export default function ReportsPage() {
 
   return (
     <>
-      <PageHeader title="Reports & KPIs" subtitle="ภาพรวมยอดขาย + งานบริการ + สุขภาพระบบ" />
+      <PageHeader title={t('reports.title')} subtitle={t('reports.subtitle')} />
 
       <div className="p-6 space-y-6">
         {/* Sales KPI row */}

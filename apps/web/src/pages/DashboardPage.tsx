@@ -1,104 +1,171 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import PageHeader from '../components/PageHeader';
-import {
-  listCustomers,
-  listProducts,
-  listUsers,
-  listQuotations,
-  listSalesOrders,
-  listAssets,
-  listPmSchedules,
-  listTickets,
-} from '../lib/queries';
-import { useAuth } from '../store/auth';
+import api from '../lib/api';
 
-function StatCard({
-  label,
-  value,
-  icon,
-  accent,
-}: {
-  label: string;
-  value: number | string;
-  icon: string;
-  accent: string;
-}) {
+const COLORS = ['#FF2720', '#FFCE00', '#0C1016', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
+
+export default function DashboardPage() {
+  const { t } = useTranslation();
+
+  const { data: summary } = useQuery({
+    queryKey: ['reports-summary'],
+    queryFn: async () => { const r = await api.get('/internal/reports/summary'); return r.data.data; },
+  });
+  const { data: pipeline } = useQuery({
+    queryKey: ['reports-pipeline'],
+    queryFn: async () => { const r = await api.get('/internal/reports/pipeline'); return r.data.data as Record<string, { count: number; totalValue: number }>; },
+  });
+  const { data: salesByBrand } = useQuery({
+    queryKey: ['reports-sales-brand'],
+    queryFn: async () => { const r = await api.get('/internal/reports/sales-by-brand'); return r.data.data as Record<string, { qty: number; revenue: number }>; },
+  });
+  const { data: pmCompliance } = useQuery({
+    queryKey: ['reports-pm'],
+    queryFn: async () => { const r = await api.get('/internal/reports/pm-compliance'); return r.data.data; },
+  });
+  const { data: salesKpis } = useQuery({
+    queryKey: ['reports-sales-kpis'],
+    queryFn: async () => { const r = await api.get('/internal/reports/sales-kpis'); return r.data.data; },
+  });
+  const { data: slaCompliance } = useQuery({
+    queryKey: ['reports-sla'],
+    queryFn: async () => { const r = await api.get('/internal/reports/sla-compliance'); return r.data.data; },
+  });
+
+  const pipelineData = pipeline ? Object.entries(pipeline).map(([stage, v]) => ({ stage, count: v.count, value: v.totalValue })) : [];
+  const brandData = salesByBrand ? Object.entries(salesByBrand).map(([brand, v]) => ({ brand, qty: v.qty, revenue: v.revenue })) : [];
+
   return (
-    <div className="bg-white rounded-brand-lg border border-gray-200 p-5 shadow-brand-sm relative overflow-hidden">
-      <div className={`absolute top-0 left-0 right-0 h-1 ${accent}`} />
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xs text-gray-500 font-medium mb-1">{label}</div>
-          <div className="font-display font-black text-3xl text-brand-navy leading-none">{value}</div>
+    <>
+      <PageHeader title={t('dashboard.greeting')} subtitle={t('dashboard.subtitle')} />
+
+      <div className="p-4 sm:p-6 space-y-6">
+        {/* KPI Cards Row 1 */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <KpiCard icon="groups" label={t('dashboard.cardCustomers')} value={summary?.sales?.customers ?? '—'} color="text-brand-navy" />
+          <KpiCard icon="fitness_center" label={t('dashboard.cardAssets')} value={summary?.operations?.assetsTotal ?? '—'} color="text-brand-red" />
+          <KpiCard icon="confirmation_number" label={t('dashboard.cardTickets')} value={summary?.afterSales?.ticketsOpen ?? '—'} color="text-orange-500" />
+          <KpiCard icon="build" label={t('dashboard.cardPmDue')} value={summary?.afterSales?.pmDueSoon60d ?? '—'} color="text-brand-gold-text" />
         </div>
-        <div className={`w-10 h-10 rounded-brand flex items-center justify-center ${accent} bg-opacity-10`}>
-          <span className={`material-symbols-outlined ${accent.replace('bg-', 'text-')}`}>{icon}</span>
+
+        {/* KPI Cards Row 2 */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <KpiCard icon="trending_up" label="Win Rate" value={salesKpis ? `${salesKpis.winRate}%` : '—'} color="text-status-success" />
+          <KpiCard icon="speed" label="Lead → Quote" value={salesKpis ? `${salesKpis.leadToQuote}%` : '—'} color="text-blue-500" />
+          <KpiCard icon="verified" label="PM Compliance" value={pmCompliance ? `${pmCompliance.complianceRate}%` : '—'} color="text-purple-500" />
+          <KpiCard icon="timer" label="SLA Compliance" value={slaCompliance ? `${slaCompliance.complianceRate}%` : '—'} color="text-status-success" />
         </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartCard title="Sales Pipeline">
+            {pipelineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={pipelineData} layout="vertical">
+                  <XAxis type="number" fontSize={11} />
+                  <YAxis type="category" dataKey="stage" fontSize={11} width={90} />
+                  <Tooltip formatter={(v) => `${v} leads`} />
+                  <Bar dataKey="count" fill="#FF2720" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <Empty />}
+          </ChartCard>
+
+          <ChartCard title="Revenue by Brand">
+            {brandData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie data={brandData} dataKey="revenue" nameKey="brand" cx="50%" cy="50%" outerRadius={90} label fontSize={11}>
+                    {brandData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip formatter={(v) => `฿${Number(v).toLocaleString()}`} />
+                  <Legend fontSize={11} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <Empty />}
+          </ChartCard>
+        </div>
+
+        {/* Bottom Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <ChartCard title="PM Status">
+            {pmCompliance ? (
+              <div className="space-y-2">
+                <ProgressBar label="Completed" value={pmCompliance.completed} max={pmCompliance.total} color="bg-status-success" />
+                <ProgressBar label="Pending" value={pmCompliance.pending} max={pmCompliance.total} color="bg-brand-gold" />
+                <ProgressBar label="Overdue" value={pmCompliance.overdue} max={pmCompliance.total} color="bg-brand-red" />
+                <div className="text-center text-2xl font-bold text-brand-navy mt-2">{pmCompliance.complianceRate}%</div>
+                <div className="text-center text-[10px] text-gray-400">Compliance Rate</div>
+              </div>
+            ) : <Empty />}
+          </ChartCard>
+
+          <ChartCard title="SLA Performance">
+            {slaCompliance ? (
+              <div className="text-center space-y-3">
+                <div className="text-4xl font-bold text-status-success">{slaCompliance.complianceRate}%</div>
+                <div className="text-xs text-gray-500">On Time: {slaCompliance.onTime} · Breached: {slaCompliance.breached}</div>
+                <div className="text-[10px] text-gray-400">Closed tickets: {slaCompliance.total}</div>
+              </div>
+            ) : <Empty />}
+          </ChartCard>
+
+          <ChartCard title="Sales Conversion">
+            {salesKpis ? (
+              <div className="space-y-2">
+                <ProgressBar label="Lead → Quote" value={salesKpis.leadToQuote} max={100} color="bg-blue-500" />
+                <ProgressBar label="Quote → SO" value={salesKpis.quoteToSo} max={100} color="bg-indigo-500" />
+                <ProgressBar label="Win Rate" value={salesKpis.winRate} max={100} color="bg-status-success" />
+                <div className="text-xs text-gray-400 mt-2">
+                  Leads: {salesKpis.totalLeads} · Quotes: {salesKpis.totalQuotes} · SOs: {salesKpis.totalSO}
+                </div>
+              </div>
+            ) : <Empty />}
+          </ChartCard>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function KpiCard({ icon, label, value, color }: { icon: string; label: string; value: string | number; color: string }) {
+  return (
+    <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-3 sm:p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <span className={`material-symbols-outlined !text-[18px] ${color}`}>{icon}</span>
+        <span className="text-[10px] sm:text-xs text-gray-500">{label}</span>
+      </div>
+      <div className={`text-xl sm:text-2xl font-bold ${color}`}>{value}</div>
+    </div>
+  );
+}
+
+function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-4">
+      <h3 className="font-display font-bold text-sm text-gray-800 mb-3">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function ProgressBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  return (
+    <div>
+      <div className="flex justify-between text-[10px] text-gray-600 mb-0.5">
+        <span>{label}</span>
+        <span className="font-mono">{value} ({pct}%)</span>
+      </div>
+      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
 }
 
-export default function DashboardPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
-
-  const customers = useQuery({
-    queryKey: ['dashboard-customers'],
-    queryFn: () => listCustomers({ pageSize: 1 }),
-  });
-  const products = useQuery({
-    queryKey: ['dashboard-products'],
-    queryFn: () => listProducts({ pageSize: 1 }),
-  });
-  const users = useQuery({
-    queryKey: ['dashboard-users'],
-    queryFn: () => listUsers({ pageSize: 1 }),
-    enabled: isAdmin,
-  });
-  const quotes = useQuery({
-    queryKey: ['dashboard-quotes'],
-    queryFn: () => listQuotations({ pageSize: 1 }),
-  });
-  const salesOrders = useQuery({
-    queryKey: ['dashboard-sales-orders'],
-    queryFn: () => listSalesOrders({ pageSize: 1 }),
-  });
-  const assets = useQuery({
-    queryKey: ['dashboard-assets'],
-    queryFn: () => listAssets({ pageSize: 1 }),
-  });
-  const pmUpcoming = useQuery({
-    queryKey: ['dashboard-pm-upcoming'],
-    queryFn: () => listPmSchedules({ upcoming: true, pageSize: 1 }),
-  });
-  const tickets = useQuery({
-    queryKey: ['dashboard-tickets'],
-    queryFn: () => listTickets({ pageSize: 1 }),
-  });
-
-  return (
-    <>
-      <PageHeader title={`สวัสดี ${user?.name ?? ''}`} subtitle="ภาพรวมระบบ NBA Sport OMS" />
-      <div className="p-6">
-        <div className="mb-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Master + Sales</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-          <StatCard label="ลูกค้า" value={customers.data?.total ?? '—'} icon="groups" accent="bg-brand-red" />
-          <StatCard label="สินค้า" value={products.data?.total ?? '—'} icon="fitness_center" accent="bg-brand-gold" />
-          <StatCard label="ใบเสนอราคา" value={quotes.data?.total ?? '—'} icon="request_quote" accent="bg-status-info" />
-          <StatCard label="Sales Orders" value={salesOrders.data?.total ?? '—'} icon="receipt_long" accent="bg-status-success" />
-          {isAdmin && (
-            <StatCard label="ผู้ใช้ระบบ" value={users.data?.total ?? '—'} icon="manage_accounts" accent="bg-brand-navy" />
-          )}
-        </div>
-
-        <div className="mb-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">After-Sales</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 mb-6">
-          <StatCard label="เครื่องของลูกค้า" value={assets.data?.total ?? '—'} icon="inventory_2" accent="bg-brand-navy" />
-          <StatCard label="PM ที่ถึงกำหนด (30 วัน)" value={pmUpcoming.data?.total ?? '—'} icon="build" accent="bg-status-warning" />
-          <StatCard label="Service Tickets" value={tickets.data?.total ?? '—'} icon="confirmation_number" accent="bg-brand-red" />
-        </div>
-      </div>
-    </>
-  );
+function Empty() {
+  return <div className="text-center py-8 text-gray-400 text-sm">No data yet</div>;
 }

@@ -1,0 +1,4 @@
+ALTER TABLE "Demo" ADD COLUMN "location" TEXT;
+ALTER TABLE "Demo" ADD COLUMN "address" TEXT;
+ALTER TABLE "Demo" ADD COLUMN "contactName" TEXT;
+ALTER TABLE "Demo" ADD COLUMN "contactPhone" TEXT;

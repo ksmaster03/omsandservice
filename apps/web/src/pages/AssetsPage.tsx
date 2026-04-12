@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import { listAssets, type Asset } from '../lib/queries';
 
@@ -16,6 +17,7 @@ const warrantyLabel: Record<Asset['warrantyStatus'], string> = {
 };
 
 export default function AssetsPage() {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<'' | Asset['warrantyStatus']>('');
   const [search, setSearch] = useState('');
 
@@ -32,8 +34,8 @@ export default function AssetsPage() {
   return (
     <>
       <PageHeader
-        title="เครื่องของลูกค้า (Assets)"
-        subtitle="รายการเครื่องที่ติดตั้งแล้ว + สถานะประกัน"
+        title={t('assetsPage.title')}
+        subtitle={t('assetsPage.subtitle')}
       />
 
       <div className="p-6">

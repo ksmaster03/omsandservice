@@ -36,3 +36,21 @@ export async function nextTicketNo(): Promise<string> {
   });
   return `T-${ym}-${String(count + 1).padStart(4, '0')}`;
 }
+
+export async function nextRmaNo(): Promise<string> {
+  const ym = monthPrefix();
+  const count = await prisma.rma.count({
+    where: { rmaNo: { startsWith: `R-${ym}-` } },
+  });
+  return `R-${ym}-${String(count + 1).padStart(4, '0')}`;
+}
+
+/**
+ * business_key correlation id. Generated once per aggregate root
+ * (SO, Installation, Ticket, RMA) to give log grep a stable handle
+ * across all related events. Format: "<prefix>-<docNo>-<rand>"
+ */
+export function makeBusinessKey(prefix: string, docNo: string): string {
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `${prefix}-${docNo}-${rand}`;
+}

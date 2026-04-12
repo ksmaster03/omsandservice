@@ -8,8 +8,11 @@ import ReportPage from './pages/ReportPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailPage from './pages/TicketDetailPage';
 import ProfilePage from './pages/ProfilePage';
+import RmaPage from './pages/RmaPage';
+import RenewalsPage from './pages/RenewalsPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import FeedbackButton from './components/FeedbackButton';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,10 +42,13 @@ export default function App() {
             <Route path="/report" element={<ReportPage />} />
             <Route path="/tickets" element={<TicketsPage />} />
             <Route path="/tickets/:id" element={<TicketDetailPage />} />
+            <Route path="/returns" element={<RmaPage />} />
+            <Route path="/renewals" element={<RenewalsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <FeedbackButton source="customer" />
       </BrowserRouter>
     </QueryClientProvider>
   );

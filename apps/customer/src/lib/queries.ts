@@ -29,7 +29,7 @@ export interface AssetDetail extends Asset {
 }
 
 export type TicketStage = 'RECEIVED' | 'ASSIGNED' | 'EN_ROUTE' | 'ARRIVED' | 'REPAIRING' | 'CLOSED' | 'CANCELLED';
-export type ProblemType = 'BELT' | 'NOISE' | 'CONSOLE' | 'MOTOR' | 'POWER' | 'OTHER';
+export type ProblemType = 'BELT' | 'NOISE' | 'CONSOLE' | 'MOTOR' | 'POWER' | 'PM' | 'OTHER';
 export type Priority = 'URGENT' | 'NORMAL' | 'LOW';
 
 export interface Ticket {
@@ -140,4 +140,25 @@ export async function markNotificationRead(id: string) {
 export async function listRenewals() {
   const res = await api.get('/customer/renewals');
   return res.data.data as Renewal[];
+}
+
+// ─── RMA ───
+export interface CustomerRma {
+  id: string;
+  rmaNo: string;
+  stage: string;
+  reason: string;
+  description: string;
+  createdAt: string;
+  asset: { id: string; serialNo: string; product: { id: string; name: string; sku: string } };
+}
+
+export async function listRmas() {
+  const res = await api.get('/customer/rmas');
+  return res.data.data as CustomerRma[];
+}
+
+export async function createRma(payload: { assetId: string; reason: string; description: string }) {
+  const res = await api.post('/customer/rmas', payload);
+  return res.data.data as CustomerRma;
 }

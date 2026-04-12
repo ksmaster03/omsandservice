@@ -24,6 +24,7 @@ const customerRoutes: FastifyPluginAsync = async (app) => {
 
     const where: Record<string, unknown> = {};
     if (q.type) where.type = q.type;
+    if (q.active !== undefined) where.active = q.active;
     if (q.search) {
       where.OR = [
         { name: { contains: q.search, mode: 'insensitive' } },

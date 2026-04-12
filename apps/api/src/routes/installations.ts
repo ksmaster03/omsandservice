@@ -8,6 +8,8 @@ import {
 import { prisma } from '../lib/prisma';
 import { paginate, toPrismaPagination } from '../lib/pagination';
 import { saveUpload, isAllowedImage } from '../lib/storage';
+import { bus } from '../lib/events';
+import { consumeForOrder } from '../lib/stock';
 
 const installationRoutes: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', app.authenticate);
@@ -97,9 +99,15 @@ const installationRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(404).send({ ok: false, error: { code: 'SO_NOT_FOUND', message: 'Sales order not found' } });
     }
 
+    // Inherit business_key from parent SO so install + SO share correlation
+    const parentSo = await prisma.salesOrder.findUnique({
+      where: { id: soId },
+      select: { businessKey: true },
+    });
     const inst = await prisma.installation.create({
       data: {
         soId,
+        businessKey: parentSo?.businessKey ?? null,
         scheduledAt: new Date(scheduledAt),
         techId: techId ?? null,
         status: techId ? 'SCHEDULED' : 'SCHEDULED',
@@ -280,6 +288,27 @@ const installationRoutes: FastifyPluginAsync = async (app) => {
 
         return createdAssets;
       });
+
+      // Consume stock reservations for this SO — moves reserved → onHand decrement.
+      // Runs in its own transaction so it's idempotent if retried.
+      await consumeForOrder(inst.soId);
+
+      // Emit after transaction committed so handlers see fresh state
+      bus.emit('installation.completed', {
+        installationId: inst.id,
+        soId: inst.soId,
+        customerId: inst.so.customerId,
+        assetIds: result.map((a) => a.id),
+      });
+      for (const asset of result) {
+        bus.emit('asset.created', {
+          assetId: asset.id,
+          customerId: inst.so.customerId,
+          productId: asset.productId,
+          serialNo: asset.serialNo,
+          warrantyEnd: asset.warrantyEnd.toISOString(),
+        });
+      }
 
       return reply.code(200).send({
         ok: true,

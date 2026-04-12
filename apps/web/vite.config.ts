@@ -19,4 +19,21 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        // Manual chunks: keep router/query/forms in the main bundle (always
+        // needed) but pull heavy libs into separate chunks loaded on demand.
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('xstate')) return 'xstate';
+            if (id.includes('@dnd-kit')) return 'dnd';
+            if (id.includes('react-i18next') || id.includes('i18next')) return 'i18n';
+            if (id.includes('@react-oauth/google')) return 'google-oauth';
+          }
+        },
+      },
+    },
+  },
 });

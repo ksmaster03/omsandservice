@@ -25,6 +25,11 @@ export async function createCustomer(payload: Partial<Customer>) {
   return res.data.data as Customer;
 }
 
+export async function updateCustomer(id: string, payload: Partial<Customer>) {
+  const res = await api.patch(`/internal/customers/${id}`, payload);
+  return res.data.data as Customer;
+}
+
 export async function listProducts(params: ListParams = {}) {
   const res = await api.get('/internal/products', { params });
   return res.data.data as Paginated<Product>;
@@ -33,6 +38,111 @@ export async function listProducts(params: ListParams = {}) {
 export async function createProduct(payload: Partial<Product>) {
   const res = await api.post('/internal/products', payload);
   return res.data.data as Product;
+}
+
+export async function updateProduct(id: string, payload: Partial<Product>) {
+  const res = await api.patch(`/internal/products/${id}`, payload);
+  return res.data.data as Product;
+}
+
+// ─── Stock ───
+export interface StockItem {
+  id: string;
+  productId: string;
+  product: { id: string; sku: string; name: string; brand: string; active: boolean };
+  onHand: number;
+  reserved: number;
+  available: number;
+  reorderAt: number;
+  lowStock: boolean;
+  updatedAt: string;
+}
+
+export async function listStock() {
+  const res = await api.get('/internal/stock');
+  return res.data.data as StockItem[];
+}
+
+export async function setStock(payload: { productId: string; onHand: number; reorderAt?: number }) {
+  const res = await api.post('/internal/stock/set', payload);
+  return res.data.data;
+}
+
+export async function adjustStock(payload: { productId: string; delta: number; reason?: string }) {
+  const res = await api.post('/internal/stock/adjust', payload);
+  return res.data.data;
+}
+
+export interface WmsStockLevel {
+  sku: string;
+  warehouse: string;
+  qty: number;
+  updatedAt: string;
+}
+
+export async function getWmsStock(sku: string) {
+  const res = await api.get(`/internal/wms/stock/${sku}`);
+  return res.data.data as WmsStockLevel[];
+}
+
+export async function getWmsStockAll() {
+  const res = await api.get('/internal/wms/stock-all');
+  return res.data.data as WmsStockLevel[];
+}
+
+// ─── RMA ───
+export interface Rma {
+  id: string;
+  rmaNo: string;
+  businessKey: string | null;
+  customerId: string;
+  assetId: string;
+  reason: string;
+  description: string;
+  stage: string;
+  resolution: string | null;
+  refundAmount: string | null;
+  pickupAt: string | null;
+  closedAt: string | null;
+  createdAt: string;
+  customer: { id: string; name: string; phone: string | null };
+  asset: { id: string; serialNo: string; product: { id: string; name: string; sku: string } };
+  tech: { id: string; name: string; phone: string | null } | null;
+}
+
+export async function listRmas(params: { stage?: string; page?: number; pageSize?: number } = {}) {
+  const res = await api.get('/internal/rmas', { params });
+  return res.data.data as Paginated<Rma>;
+}
+
+export async function getRma(id: string) {
+  const res = await api.get(`/internal/rmas/${id}`);
+  return res.data.data as Rma & { events: Array<{ id: string; stage: string; note: string | null; createdAt: string }> };
+}
+
+export async function createRma(payload: {
+  customerId: string;
+  assetId: string;
+  reason: string;
+  description: string;
+}) {
+  const res = await api.post('/internal/rmas', payload);
+  return res.data.data as Rma;
+}
+
+export async function updateRmaStage(
+  id: string,
+  payload: {
+    stage: string;
+    note?: string;
+    pickupAt?: string;
+    techId?: string;
+    refundAmount?: number;
+    replacementAssetId?: string;
+  },
+) {
+  const res = await api.post(`/internal/rmas/${id}/stage`, payload);
+  return res.data.data as Rma;
 }
 
 export async function listUsers(params: ListParams = {}) {
@@ -87,6 +197,10 @@ export async function createDemo(payload: {
   productId: string;
   scheduledAt: string;
   note?: string;
+  location?: string;
+  address?: string;
+  contactName?: string;
+  contactPhone?: string;
 }) {
   const res = await api.post('/internal/leads/demos', payload);
   return res.data.data as Demo;
@@ -99,6 +213,10 @@ export interface Demo {
   scheduledAt: string;
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
   note: string | null;
+  location: string | null;
+  address: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
   product: { id: string; name: string; brand: string; sku: string };
   lead: {
     id: string;
@@ -351,7 +469,7 @@ export type TicketStage =
 export interface ServiceTicket {
   id: string;
   ticketNo: string;
-  problemType: 'BELT' | 'NOISE' | 'CONSOLE' | 'MOTOR' | 'POWER' | 'OTHER';
+  problemType: 'BELT' | 'NOISE' | 'CONSOLE' | 'MOTOR' | 'POWER' | 'PM' | 'OTHER';
   priority: 'URGENT' | 'NORMAL' | 'LOW';
   description: string;
   stage: TicketStage;
@@ -567,6 +685,7 @@ export interface SalesOrder {
   createdAt: string;
   customer: { id: string; name: string };
   paymentProgress?: string;
+  installation?: { id: string; status: string; scheduledAt: string } | null;
 }
 
 export interface SalesOrderDetail extends SalesOrder {
@@ -583,23 +702,31 @@ export interface SalesOrderDetail extends SalesOrder {
 // Domain types (mirror Prisma models, but only the fields we use in the UI)
 export interface Customer {
   id: string;
+  wmsCode: string | null;
   name: string;
+  alternateName: string | null;
   taxId: string | null;
   type: 'INDIVIDUAL' | 'CORPORATE';
   contactName: string | null;
   phone: string | null;
   email: string | null;
   address: string | null;
+  alternateAddress: string | null;
+  active: boolean;
   createdAt: string;
 }
 
 export interface Product {
   id: string;
   sku: string;
+  wmsPartNo: string | null;
   brand: 'MAXNUM' | 'GORILLA_TECK' | 'ANYFIT' | 'IMPULSE';
   name: string;
   category: string;
-  price: string; // prisma Decimal serialized as string
+  partType: string | null;
+  uom: string;
+  standardPack: number | null;
+  price: string;
   warrantyMonths: number;
   pmIntervalMonths: number;
   active: boolean;

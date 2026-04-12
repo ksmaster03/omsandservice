@@ -4,9 +4,13 @@ import { listQuerySchema } from './pagination';
 
 export const createProductSchema = z.object({
   sku: z.string().min(2).max(50).regex(/^[A-Z0-9-]+$/, 'SKU must be uppercase alphanumeric with dashes'),
+  wmsPartNo: z.string().max(50).optional(),
   brand: z.enum(BRANDS),
   name: z.string().min(1).max(200),
   category: z.string().min(1).max(50),
+  partType: z.string().max(50).optional(),
+  uom: z.string().max(10).default('EA'),
+  standardPack: z.number().int().min(1).optional(),
   price: z.number().nonnegative().max(99999999),
   warrantyMonths: z.number().int().min(0).max(120).default(24),
   pmIntervalMonths: z.number().int().min(1).max(24).default(3),

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import { listWmsSyncLogs, getWmsStatus, type WmsSyncLog } from '../lib/queries';
 
@@ -11,6 +12,7 @@ const STATUS_COLOR: Record<WmsSyncLog['status'], string> = {
 };
 
 export default function WmsSyncLogsPage() {
+  const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<WmsSyncLog['status'] | ''>('');
 
   const { data: wmsStatus } = useQuery({
@@ -26,8 +28,8 @@ export default function WmsSyncLogsPage() {
   return (
     <>
       <PageHeader
-        title="WMS Integration"
-        subtitle="สถานะการเชื่อมต่อ WMS + ประวัติการ sync"
+        title={t('wmsLogs.title')}
+        subtitle={t('wmsLogs.subtitle')}
         action={
           wmsStatus && (
             <div className="flex items-center gap-2">

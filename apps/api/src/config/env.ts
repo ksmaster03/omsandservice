@@ -30,6 +30,13 @@ const envSchema = z.object({
   // WMS (stubbed, mock first)
   WMS_BASE_URL: z.string().optional(),
   WMS_API_KEY: z.string().optional(),
+
+  // Google OAuth (ID-token flow via @react-oauth/google popup)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+
+  // Toptier WMS real integration
+  WMS_USERNAME: z.string().optional(),
+  WMS_PASSWORD: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

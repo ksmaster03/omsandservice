@@ -11,6 +11,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
@@ -47,7 +48,7 @@ const stageAccent: Record<LeadStage, string> = {
 };
 
 // ── Draggable lead card ────────────────────────────────────────
-function LeadCard({ lead, onMoveNext }: { lead: Lead; onMoveNext: () => void }) {
+function LeadCard({ lead, onMoveNext, onSelect }: { lead: Lead; onMoveNext: () => void; onSelect: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: { stage: lead.stage },
@@ -68,11 +69,23 @@ function LeadCard({ lead, onMoveNext }: { lead: Lead; onMoveNext: () => void }) 
       {...listeners}
       className="bg-white border border-gray-200 rounded-brand p-2.5 hover:shadow-brand-md transition-shadow cursor-grab active:cursor-grabbing touch-none"
     >
-      <div className="text-[11.5px] font-semibold text-gray-900 truncate">{lead.customer.name}</div>
-      <div className="text-[10px] text-brand-navy font-mono mt-0.5">
-        ฿{Number(lead.value).toLocaleString()}
-      </div>
-      {lead.note && <div className="text-[10px] text-gray-500 mt-1 line-clamp-2">{lead.note}</div>}
+      <button
+        type="button"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        className="w-full text-left"
+      >
+        <div className="text-[11.5px] font-semibold text-gray-900 truncate">{lead.customer.name}</div>
+        <div className="text-[10px] text-brand-navy font-mono mt-0.5">
+          ฿{Number(lead.value).toLocaleString()}
+        </div>
+        {lead.note && <div className="text-[10px] text-gray-500 mt-1 line-clamp-2">{lead.note}</div>}
+        {lead.expectedClose && (
+          <div className="text-[9px] text-gray-400 mt-1">
+            คาดปิด: {new Date(lead.expectedClose).toLocaleDateString('th-TH')}
+          </div>
+        )}
+      </button>
       {onMoveNext && (
         <button
           type="button"
@@ -91,7 +104,7 @@ function LeadCard({ lead, onMoveNext }: { lead: Lead; onMoveNext: () => void }) 
 }
 
 // ── Droppable column ───────────────────────────────────────────
-function StageColumn({ stage, items, onMoveNext }: { stage: LeadStage; items: Lead[]; onMoveNext: (id: string, to: LeadStage) => void }) {
+function StageColumn({ stage, items, onMoveNext, onSelect }: { stage: LeadStage; items: Lead[]; onMoveNext: (id: string, to: LeadStage) => void; onSelect: (lead: Lead) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const stageTotal = items.reduce((s, l) => s + Number(l.value), 0);
   const idx = STAGES.indexOf(stage);
@@ -122,6 +135,7 @@ function StageColumn({ stage, items, onMoveNext }: { stage: LeadStage; items: Le
           <LeadCard
             key={lead.id}
             lead={lead}
+            onSelect={() => onSelect(lead)}
             onMoveNext={next ? () => onMoveNext(lead.id, next) : () => undefined}
           />
         ))}
@@ -131,9 +145,13 @@ function StageColumn({ stage, items, onMoveNext }: { stage: LeadStage; items: Le
 }
 
 export default function LeadsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [openCreate, setOpenCreate] = useState(false);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [stageNote, setStageNote] = useState('');
+  const [pendingStage, setPendingStage] = useState<{ id: string; to: LeadStage } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -221,14 +239,15 @@ export default function LeadsPage() {
     const targetStage = e.over.id as LeadStage;
     const currentStage = (e.active.data.current?.stage as LeadStage) ?? null;
     if (!currentStage || currentStage === targetStage) return;
-    moveStageMut.mutate({ id: leadId, stage: targetStage });
+    setPendingStage({ id: leadId, to: targetStage });
+    setStageNote('');
   }
 
   return (
     <>
       <PageHeader
-        title="Sales Pipeline"
-        subtitle="ลากการ์ดเพื่อเปลี่ยนสถานะ — หรือกด → Next"
+        title={t('leads.title')}
+        subtitle={t('leads.subtitle')}
         action={
           <Button onClick={() => setOpenCreate(true)}>
             <span className="material-symbols-outlined !text-[18px]">add</span>
@@ -248,7 +267,11 @@ export default function LeadsPage() {
                   key={stage}
                   stage={stage}
                   items={data?.[stage] ?? []}
-                  onMoveNext={(id, to) => moveStageMut.mutate({ id, stage: to })}
+                  onSelect={(lead) => setSelectedLead(lead)}
+                  onMoveNext={(id, to) => {
+                    setPendingStage({ id, to });
+                    setStageNote('');
+                  }}
                 />
               ))}
             </div>
@@ -268,6 +291,115 @@ export default function LeadsPage() {
           </DndContext>
         )}
       </div>
+
+      {/* Lead detail modal */}
+      <Modal
+        open={!!selectedLead}
+        onClose={() => setSelectedLead(null)}
+        title={selectedLead ? `Lead — ${selectedLead.customer.name}` : 'Lead'}
+      >
+        {selectedLead && (
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <div className="text-gray-500">ลูกค้า</div>
+                <div className="font-semibold text-gray-900">{selectedLead.customer.name}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">มูลค่า</div>
+                <div className="font-semibold text-brand-navy font-mono">฿{Number(selectedLead.value).toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">สถานะ</div>
+                <div className="font-semibold">{stageLabel[selectedLead.stage]}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">คาดปิดการขาย</div>
+                <div className="font-semibold">{selectedLead.expectedClose ? new Date(selectedLead.expectedClose).toLocaleDateString('th-TH') : '—'}</div>
+              </div>
+              {selectedLead.owner && (
+                <div>
+                  <div className="text-gray-500">เจ้าของ Lead</div>
+                  <div className="font-semibold">{selectedLead.owner.name}</div>
+                </div>
+              )}
+              <div>
+                <div className="text-gray-500">สร้างเมื่อ</div>
+                <div className="font-semibold">{new Date(selectedLead.createdAt).toLocaleDateString('th-TH')}</div>
+              </div>
+            </div>
+            {selectedLead.note && (
+              <div className="bg-gray-50 rounded-brand p-3 text-xs text-gray-700 whitespace-pre-wrap">
+                <div className="text-[10px] text-gray-400 font-semibold mb-1">หมายเหตุ</div>
+                {selectedLead.note}
+              </div>
+            )}
+            {/* Stage transition buttons */}
+            <div className="pt-2 border-t border-gray-200">
+              <div className="text-xs font-semibold text-gray-600 mb-2">เปลี่ยนสถานะ</div>
+              <div className="flex flex-wrap gap-2">
+                {[...STAGES, 'WON' as LeadStage, 'LOST' as LeadStage]
+                  .filter((s) => s !== selectedLead.stage)
+                  .map((s) => (
+                    <Button
+                      key={s}
+                      size="sm"
+                      variant={s === 'LOST' ? 'outline' : s === 'WON' ? 'navy' : 'outline'}
+                      onClick={() => {
+                        setPendingStage({ id: selectedLead.id, to: s });
+                        setStageNote('');
+                        setSelectedLead(null);
+                      }}
+                    >
+                      {stageLabel[s]}
+                    </Button>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Stage transition note modal */}
+      <Modal
+        open={!!pendingStage}
+        onClose={() => setPendingStage(null)}
+        title={pendingStage ? `ย้ายไป ${stageLabel[pendingStage.to]}` : ''}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPendingStage(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={() => {
+                if (pendingStage) {
+                  moveStageMut.mutate({ id: pendingStage.id, stage: pendingStage.to });
+                  if (stageNote.trim()) {
+                    updateLeadStage(pendingStage.id, pendingStage.to, stageNote.trim());
+                  }
+                  setPendingStage(null);
+                }
+              }}
+              disabled={moveStageMut.isPending}
+            >
+              {moveStageMut.isPending ? t('common.saving') : t('common.confirm')}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div className="text-xs text-gray-500 bg-gray-50 rounded-brand p-2">
+            บันทึกหมายเหตุ (ไม่บังคับ) เช่น เหตุผลที่เปลี่ยนสถานะ, นัดหมายถัดไป
+          </div>
+          <textarea
+            value={stageNote}
+            onChange={(e) => setStageNote(e.target.value)}
+            rows={3}
+            placeholder="หมายเหตุ..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-brand text-sm focus:outline-none focus:border-brand-red"
+          />
+        </div>
+      </Modal>
 
       <Modal
         open={openCreate}

@@ -35,7 +35,7 @@ export type TicketStage = (typeof TICKET_STAGES)[number];
 export const PRIORITIES = ['URGENT', 'NORMAL', 'LOW'] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
-export const PROBLEM_TYPES = ['BELT', 'NOISE', 'CONSOLE', 'MOTOR', 'POWER', 'OTHER'] as const;
+export const PROBLEM_TYPES = ['BELT', 'NOISE', 'CONSOLE', 'MOTOR', 'POWER', 'PM', 'OTHER'] as const;
 export type ProblemType = (typeof PROBLEM_TYPES)[number];
 
 /** Default Settings seed values (written to DB on first boot) */

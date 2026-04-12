@@ -33,6 +33,10 @@ export const createDemoSchema = z.object({
   productId: z.string().uuid(),
   scheduledAt: z.string().datetime(),
   note: z.string().max(1000).optional(),
+  location: z.string().max(200).optional(),
+  address: z.string().max(500).optional(),
+  contactName: z.string().max(100).optional(),
+  contactPhone: z.string().max(20).optional(),
 });
 export type CreateDemoInput = z.infer<typeof createDemoSchema>;
 

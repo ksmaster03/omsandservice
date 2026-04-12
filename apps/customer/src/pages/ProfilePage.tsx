@@ -45,7 +45,7 @@ export default function ProfilePage() {
             className="flex items-center justify-center gap-2 w-full py-3 bg-brand-red text-white font-semibold rounded-brand"
           >
             <span className="material-symbols-outlined !text-[18px]" aria-hidden="true">call</span>
-            โทร NBA Sport
+            โทร Toptier
           </a>
         </div>
 
@@ -57,7 +57,7 @@ export default function ProfilePage() {
         </button>
 
         <div className="text-[10px] text-gray-400 text-center">
-          NBA Sport Customer PWA · v0.5.0
+          Toptier Customer PWA · v1.0.0
         </div>
       </div>
     </>

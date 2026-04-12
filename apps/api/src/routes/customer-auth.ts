@@ -16,10 +16,14 @@
  * validates a LINE idToken against the LINE API and sets line_user_id.
  */
 import type { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
 import { requestOtpSchema, verifyOtpSchema, JWT_ACCESS_TTL, JWT_REFRESH_TTL } from '@oms/shared';
 import { prisma } from '../lib/prisma';
+import { verifyGoogleIdToken } from '../lib/google-auth';
 
 const DEV_CODE = '000000';
+
+const googleLoginSchema = z.object({ idToken: z.string().min(10) });
 
 const customerAuthRoutes: FastifyPluginAsync = async (app) => {
   // ─── POST /customer/auth/request-otp ───
@@ -115,6 +119,97 @@ const customerAuthRoutes: FastifyPluginAsync = async (app) => {
           customerId: customerUser.customerId,
           displayName: customerUser.displayName,
           phone: customerUser.phone,
+        },
+      },
+    };
+  });
+
+  // ─── POST /customer/auth/google ───
+  // Match the Google account to an existing Customer by email.
+  // No auto-create: if no Customer has this email, sales must register first.
+  app.post('/google', async (req, reply) => {
+    const parsed = googleLoginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: 'VALIDATION', message: 'Invalid input', details: parsed.error.flatten() },
+      });
+    }
+
+    let profile;
+    try {
+      profile = await verifyGoogleIdToken(parsed.data.idToken);
+    } catch (err) {
+      app.log.warn({ err }, 'Google ID token verification failed');
+      return reply.code(401).send({
+        ok: false,
+        error: { code: 'INVALID_GOOGLE_TOKEN', message: 'Google sign-in verification failed' },
+      });
+    }
+    if (!profile.emailVerified) {
+      return reply.code(401).send({
+        ok: false,
+        error: { code: 'EMAIL_NOT_VERIFIED', message: 'Email Google ยังไม่ได้ยืนยัน' },
+      });
+    }
+
+    // 1) Existing CustomerUser by email
+    let customerUser = await prisma.customerUser.findFirst({ where: { email: profile.email } });
+
+    // 2) Or find a Customer with matching email → create CustomerUser
+    if (!customerUser) {
+      const customer = await prisma.customer.findFirst({
+        where: { email: profile.email, active: true },
+      });
+      if (!customer) {
+        return reply.code(401).send({
+          ok: false,
+          error: {
+            code: 'NOT_REGISTERED',
+            message: `${profile.email} is not registered as a customer — contact sales`,
+          },
+        });
+      }
+      customerUser = await prisma.customerUser.create({
+        data: {
+          customerId: customer.id,
+          email: profile.email,
+          displayName: profile.name,
+          avatarUrl: profile.picture,
+          lastLoginAt: new Date(),
+        },
+      });
+    } else {
+      await prisma.customerUser.update({
+        where: { id: customerUser.id },
+        data: {
+          lastLoginAt: new Date(),
+          displayName: customerUser.displayName || profile.name,
+          avatarUrl: customerUser.avatarUrl ?? profile.picture,
+        },
+      });
+    }
+
+    const accessToken = app.jwt.sign(
+      { scope: 'customer', sub: customerUser.id, customerId: customerUser.customerId },
+      { expiresIn: JWT_ACCESS_TTL },
+    );
+    const refreshToken = app.jwt.sign(
+      { scope: 'customer', sub: customerUser.id, customerId: customerUser.customerId },
+      { expiresIn: JWT_REFRESH_TTL },
+    );
+
+    return {
+      ok: true,
+      data: {
+        accessToken,
+        refreshToken,
+        user: {
+          id: customerUser.id,
+          customerId: customerUser.customerId,
+          displayName: customerUser.displayName,
+          phone: customerUser.phone,
+          email: customerUser.email,
         },
       },
     };

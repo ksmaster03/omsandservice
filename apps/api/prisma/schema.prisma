@@ -26,6 +26,7 @@ model User {
   name         String
   phone        String?
   role         UserRole
+  skills       String[] @default([])
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -35,6 +36,7 @@ model User {
   installedJobs    Installation[]  @relation("installTech")
   ticketsAssigned  ServiceTicket[] @relation("ticketTech")
   pmsAssigned      PmSchedule[]    @relation("pmTech")
+  rmasAssigned     Rma[]           @relation("rmaTech")
   location         TechLocation?
   auditLogs        AuditLog[]
   ticketEvents     TicketEvent[]
@@ -47,16 +49,21 @@ enum CustomerType {
 }
 
 model Customer {
-  id          String       @id @default(uuid())
-  name        String
-  taxId       String?
-  type        CustomerType @default(CORPORATE)
-  contactName String?
-  phone       String?
-  email       String?
-  address     String?
-  lat         Decimal?     @db.Decimal(10, 7)
-  lng         Decimal?     @db.Decimal(10, 7)
+  id               String       @id @default(uuid())
+  wmsCode          String?      @unique
+  name             String
+  alternateName    String?
+  taxId            String?
+  type             CustomerType @default(CORPORATE)
+  contactName      String?
+  phone            String?
+  email            String?
+  address          String?
+  alternateAddress String?
+  lat              Decimal?     @db.Decimal(10, 7)
+  lng              Decimal?     @db.Decimal(10, 7)
+  active           Boolean      @default(true)
+  customData       Json?        @default("{}")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -65,7 +72,9 @@ model Customer {
   quotations  Quotation[]
   orders      SalesOrder[]
   assets      Asset[]
-  tickets     ServiceTicket[]
+  tickets           ServiceTicket[]
+  rmas              Rma[]
+  serviceAgreements ServiceAgreement[]
 }
 
 model CustomerUser {
@@ -95,9 +104,13 @@ enum Brand {
 model Product {
   id               String   @id @default(uuid())
   sku              String   @unique
+  wmsPartNo        String?  @unique
   brand            Brand
   name             String
   category         String
+  partType         String?
+  uom              String   @default("EA")
+  standardPack     Int?
   price            Decimal  @db.Decimal(12, 2)
   warrantyMonths   Int      @default(24)
   pmIntervalMonths Int      @default(3)
@@ -109,6 +122,132 @@ model Product {
   soItems    SOItem[]
   demos      Demo[]
   assets     Asset[]
+  stockItem  StockItem?
+}
+
+// ─── STOCK + RESERVATION ─────────────────────────────────────
+// Single-warehouse model for now. `onHand` is authoritative physical
+// inventory; `reserved` is the sum of ACTIVE reservations against it.
+// Available = onHand - reserved. Reserve at SO confirm, release on
+// cancel, consume (decrement onHand) when Installation completes.
+model StockItem {
+  id        String   @id @default(uuid())
+  productId String   @unique
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  onHand    Int      @default(0)
+  reserved  Int      @default(0)
+  reorderAt Int      @default(0)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  reservations StockReservation[]
+
+  @@index([productId])
+}
+
+enum StockReservationStatus {
+  ACTIVE
+  RELEASED
+  CONSUMED
+}
+
+// ─── RMA / RETURNS ───────────────────────────────────────────
+// Handles post-sale returns: the customer or sales rep raises a
+// return request against an Asset; ops approves/rejects; tech picks
+// up the machine; QC inspects; resolution = refund, replacement, or
+// refurbish-and-return. State machine lives in shared/machines.
+enum RmaStage {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  INSPECTING
+  REFUNDED
+  REPLACED
+  REFURBISHED
+  CANCELLED
+}
+
+enum RmaReason {
+  DOA            // dead on arrival
+  DEFECT
+  WRONG_ITEM
+  CUSTOMER_CHANGE_MIND
+  WARRANTY_CLAIM
+  OTHER
+}
+
+enum RmaResolution {
+  REFUND
+  REPLACE
+  REFURBISH
+  REJECTED
+}
+
+model Rma {
+  id              String         @id @default(uuid())
+  rmaNo           String         @unique
+  businessKey     String?        @unique
+  customerId      String
+  customer        Customer       @relation(fields: [customerId], references: [id])
+  assetId         String
+  asset           Asset          @relation(fields: [assetId], references: [id])
+  soId            String?
+  reason          RmaReason
+  description     String
+  stage           RmaStage       @default(REQUESTED)
+  resolution      RmaResolution?
+  pickupAt        DateTime?
+  pickedUpAt      DateTime?
+  inspectedAt     DateTime?
+  closedAt        DateTime?
+  refundAmount    Decimal?       @db.Decimal(12, 2)
+  replacementAssetId String?
+  techId          String?
+  tech            User?          @relation("rmaTech", fields: [techId], references: [id])
+  note            String?
+  createdById     String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  events          RmaEvent[]
+
+  @@index([customerId])
+  @@index([assetId])
+  @@index([stage])
+}
+
+model RmaEvent {
+  id        String   @id @default(uuid())
+  rmaId     String
+  rma       Rma      @relation(fields: [rmaId], references: [id], onDelete: Cascade)
+  stage     RmaStage
+  note      String?
+  actorId   String?
+  createdAt DateTime @default(now())
+
+  @@index([rmaId])
+}
+
+model StockReservation {
+  id          String                 @id @default(uuid())
+  stockItemId String
+  stockItem   StockItem              @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+  productId   String
+  soId        String
+  soItemId    String
+  qty         Int
+  status      StockReservationStatus @default(ACTIVE)
+  expiresAt   DateTime?
+  createdAt   DateTime               @default(now())
+  releasedAt  DateTime?
+  consumedAt  DateTime?
+  note        String?
+
+  @@index([soId])
+  @@index([productId])
+  @@index([status])
 }
 
 // ─── SALES PIPELINE ──────────────────────────────────────────
@@ -196,6 +335,7 @@ enum SOStatus {
 model SalesOrder {
   id          String   @id @default(uuid())
   soNo        String   @unique
+  businessKey String?  @unique
   quotationId String?  @unique
   customerId  String
   status      SOStatus @default(PENDING)
@@ -252,13 +392,17 @@ enum DemoStatus {
 }
 
 model Demo {
-  id          String     @id @default(uuid())
-  leadId      String
-  productId   String
-  scheduledAt DateTime
-  status      DemoStatus @default(SCHEDULED)
-  note        String?
-  createdAt   DateTime   @default(now())
+  id           String     @id @default(uuid())
+  leadId       String
+  productId    String
+  scheduledAt  DateTime
+  status       DemoStatus @default(SCHEDULED)
+  note         String?
+  location     String?
+  address      String?
+  contactName  String?
+  contactPhone String?
+  createdAt    DateTime   @default(now())
 
   lead    Lead    @relation(fields: [leadId], references: [id])
   product Product @relation(fields: [productId], references: [id])
@@ -273,6 +417,7 @@ enum InstallStatus {
 
 model Installation {
   id          String        @id @default(uuid())
+  businessKey String?       @unique
   soId        String        @unique
   scheduledAt DateTime
   techId      String?
@@ -303,6 +448,7 @@ model Asset {
   pmSchedules PmSchedule[]
   tickets     ServiceTicket[]
   renewals    WarrantyRenewal[]
+  rmas        Rma[]
 }
 
 enum PmStatus {
@@ -353,6 +499,7 @@ enum ProblemType {
   CONSOLE
   MOTOR
   POWER
+  PM
   OTHER
 }
 
@@ -375,6 +522,7 @@ enum TicketStage {
 model ServiceTicket {
   id              String      @id @default(uuid())
   ticketNo        String      @unique
+  businessKey     String?     @unique
   customerId      String
   assetId         String
   problemType     ProblemType
@@ -489,6 +637,147 @@ model LineMessage {
   createdAt      DateTime @default(now())
 
   customerUser CustomerUser? @relation(fields: [customerUserId], references: [id])
+}
+
+// ─── SERVICE AGREEMENT (Recurring contracts) ────────────────
+enum ServiceAgreementStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model ServiceAgreement {
+  id           String                 @id @default(uuid())
+  agreementNo  String                 @unique
+  customerId   String
+  customer     Customer               @relation(fields: [customerId], references: [id])
+  type         String                 @default("PM_PACKAGE")
+  coverage     String?
+  startDate    DateTime
+  endDate      DateTime
+  price        Decimal                @db.Decimal(12, 2)
+  status       ServiceAgreementStatus @default(DRAFT)
+  autoRenew    Boolean                @default(false)
+  note         String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([endDate])
+}
+
+// ─── SPARE PARTS ─────────────────────────────────────────────
+model SparePart {
+  id          String   @id @default(uuid())
+  partNo      String   @unique
+  name        String
+  category    String?
+  unit        String   @default("EA")
+  costPrice   Decimal? @db.Decimal(12, 2)
+  sellPrice   Decimal? @db.Decimal(12, 2)
+  onHand      Int      @default(0)
+  reorderAt   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  usages      SparePartUsage[]
+
+  @@index([partNo])
+}
+
+model SparePartUsage {
+  id          String   @id @default(uuid())
+  sparePartId String
+  sparePart   SparePart @relation(fields: [sparePartId], references: [id])
+  ticketId    String?
+  rmaId       String?
+  pmId        String?
+  qty         Int
+  techId      String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([sparePartId])
+  @@index([ticketId])
+}
+
+// ─── INSTALLATION CHECKLIST ──────────────────────────────────
+model InstallChecklist {
+  id              String   @id @default(uuid())
+  installationId  String
+  step            Int
+  label           String
+  checked         Boolean  @default(false)
+  photoKey        String?
+  note            String?
+  checkedAt       DateTime?
+  checkedBy       String?
+
+  @@index([installationId])
+}
+
+// ─── FEEDBACK ────────────────────────────────────────────────
+enum FeedbackType {
+  BUG
+  FEATURE
+  IMPROVEMENT
+  QUESTION
+  OTHER
+}
+
+enum FeedbackStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  WONT_FIX
+}
+
+enum FeedbackPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Feedback {
+  id          String           @id @default(uuid())
+  type        FeedbackType
+  priority    FeedbackPriority @default(MEDIUM)
+  status      FeedbackStatus   @default(OPEN)
+  subject     String
+  description String
+  screenshot  String?
+  source      String           @default("admin")
+  submittedBy String?
+  submitterName String?
+  submitterEmail String?
+  assignedTo  String?
+  resolution  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  replies     FeedbackReply[]
+
+  @@index([status])
+  @@index([type])
+}
+
+model FeedbackReply {
+  id         String   @id @default(uuid())
+  feedbackId String
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  message    String
+  authorName String
+  authorRole String?
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([feedbackId])
 }
 
 // ─── SETTINGS / SYSTEM ───────────────────────────────────────

@@ -6,11 +6,15 @@ import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import { env, isDev } from './config/env';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import authPlugin from './plugins/auth';
+import websocketPlugin from './plugins/websocket';
 import healthRoutes from './routes/health';
 import authRoutes from './routes/auth';
 import customerRoutes from './routes/customers';
 import productRoutes from './routes/products';
+import stockRoutes from './routes/stock';
 import userRoutes from './routes/users';
 import leadRoutes from './routes/leads';
 import quotationRoutes from './routes/quotations';
@@ -20,6 +24,12 @@ import assetRoutes from './routes/assets';
 import pmRoutes from './routes/pm-schedules';
 import ticketRoutes from './routes/service-tickets';
 import renewalRoutes from './routes/renewals';
+import rmaRoutes from './routes/rmas';
+import settingsRoutes from './routes/settings';
+import feedbackRoutes from './routes/feedback';
+import customer360Routes from './routes/customer-360';
+import sparePartRoutes from './routes/spare-parts';
+import serviceAgreementRoutes from './routes/service-agreements';
 import wmsRoutes from './routes/wms';
 import reportsRoutes from './routes/reports';
 import techRoutes from './routes/tech';
@@ -28,6 +38,9 @@ import customerDataRoutes from './routes/customer-data';
 import { prisma } from './lib/prisma';
 import { closeBrowser } from './lib/pdf';
 import { getUploadRoot } from './lib/storage';
+import { registerEventHandlers } from './events/handlers';
+import { sweepOrphanReservations } from './lib/stock';
+import { checkSlaEscalation } from './lib/sla-escalation';
 import { mkdir } from 'node:fs/promises';
 
 export async function buildServer() {
@@ -47,6 +60,32 @@ export async function buildServer() {
 
   // Ensure upload dir exists before static serving
   await mkdir(getUploadRoot(), { recursive: true });
+
+  // Wire domain event handlers once per process
+  registerEventHandlers();
+
+  // Periodic cleanup: sweep orphan stock reservations every 10 minutes.
+  // Skipped under tests to keep them deterministic.
+  if (!process.env.VITEST && process.env.NODE_ENV !== 'test') {
+    setInterval(() => {
+      sweepOrphanReservations()
+        .then((res) => {
+          if (res.released > 0) app.log.info({ res }, 'stock sweep: released orphan reservations');
+        })
+        .catch((err) => app.log.warn({ err }, 'stock sweep failed'));
+    }, 10 * 60 * 1000).unref();
+
+    // SLA escalation check every 15 minutes
+    setInterval(() => {
+      checkSlaEscalation()
+        .then((res) => {
+          if (res.warned + res.breached + res.critical > 0) {
+            app.log.info({ res }, 'SLA check: escalations found');
+          }
+        })
+        .catch((err) => app.log.warn({ err }, 'SLA check failed'));
+    }, 15 * 60 * 1000).unref();
+  }
 
   // Core plugins
   await app.register(helmet, { contentSecurityPolicy: false });
@@ -72,13 +111,38 @@ export async function buildServer() {
     prefix: '/uploads/',
     decorateReply: false,
   });
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: 'Toptier OSM API',
+        description: 'Order & Service Management API',
+        version: '2.23.0',
+      },
+      servers: [{ url: '/' }],
+      components: {
+        securitySchemes: {
+          bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        },
+      },
+      security: [{ bearerAuth: [] }],
+    },
+  });
+  await app.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: { docExpansion: 'list', deepLinking: true },
+  });
   await app.register(authPlugin);
+  await app.register(websocketPlugin);
 
   // Routes
   await app.register(healthRoutes);
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(customerRoutes, { prefix: '/api/v1/internal/customers' });
+  await app.register(customer360Routes, { prefix: '/api/v1/internal/customers' });
   await app.register(productRoutes, { prefix: '/api/v1/internal/products' });
+  await app.register(stockRoutes, { prefix: '/api/v1/internal/stock' });
+  await app.register(sparePartRoutes, { prefix: '/api/v1/internal/spare-parts' });
+  await app.register(serviceAgreementRoutes, { prefix: '/api/v1/internal/service-agreements' });
   await app.register(userRoutes, { prefix: '/api/v1/internal/users' });
   await app.register(leadRoutes, { prefix: '/api/v1/internal/leads' });
   await app.register(quotationRoutes, { prefix: '/api/v1/internal/quotations' });
@@ -88,6 +152,9 @@ export async function buildServer() {
   await app.register(pmRoutes, { prefix: '/api/v1/internal/pm-schedules' });
   await app.register(ticketRoutes, { prefix: '/api/v1/internal/tickets' });
   await app.register(renewalRoutes, { prefix: '/api/v1/internal/renewals' });
+  await app.register(rmaRoutes, { prefix: '/api/v1/internal/rmas' });
+  await app.register(settingsRoutes, { prefix: '/api/v1/internal/settings' });
+  await app.register(feedbackRoutes, { prefix: '/api/v1/feedback' });
   await app.register(wmsRoutes, { prefix: '/api/v1/internal/wms' });
   await app.register(reportsRoutes, { prefix: '/api/v1/internal/reports' });
   await app.register(techRoutes, { prefix: '/api/v1/tech' });
@@ -98,9 +165,9 @@ export async function buildServer() {
   app.get('/', async () => ({
     ok: true,
     data: {
-      name: 'NBA Sport OMS API',
-      version: '0.0.1',
-      docs: '/docs (coming soon)',
+      name: 'Toptier OSM API',
+      version: '2.23.0',
+      docs: '/docs',
     },
   }));
 

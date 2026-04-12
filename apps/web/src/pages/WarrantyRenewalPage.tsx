@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
@@ -28,6 +29,7 @@ const STATUS_COLOR: Record<Renewal['status'], string> = {
 };
 
 export default function WarrantyRenewalPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [tab, setTab] = useState<'candidates' | 'offers'>('candidates');
   const [offerFor, setOfferFor] = useState<RenewalCandidate | null>(null);
@@ -74,8 +76,8 @@ export default function WarrantyRenewalPage() {
   return (
     <>
       <PageHeader
-        title="ต่อประกัน"
-        subtitle="รายการเครื่องที่ประกันใกล้หมด + ข้อเสนอที่ยื่นให้ลูกค้า"
+        title={t('renewals.title')}
+        subtitle={t('renewals.subtitle')}
       />
 
       <div className="p-6">

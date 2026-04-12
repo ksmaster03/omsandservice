@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
@@ -14,27 +15,9 @@ import {
   type ServiceTicket,
   type TicketStage,
 } from '../lib/queries';
+import { allowedTransitions, TICKET_EVENT_LABELS_TH } from '@oms/shared';
 
 const STAGES: TicketStage[] = ['RECEIVED', 'ASSIGNED', 'EN_ROUTE', 'ARRIVED', 'REPAIRING', 'CLOSED'];
-
-const STAGE_LABEL: Record<TicketStage, string> = {
-  RECEIVED: 'รับแจ้ง',
-  ASSIGNED: 'มอบหมาย',
-  EN_ROUTE: 'เดินทาง',
-  ARRIVED: 'ถึงหน้างาน',
-  REPAIRING: 'กำลังซ่อม',
-  CLOSED: 'ปิดงาน',
-  CANCELLED: 'ยกเลิก',
-};
-
-const PROBLEM_LABEL: Record<ServiceTicket['problemType'], string> = {
-  BELT: 'สายพาน',
-  NOISE: 'เสียงดัง',
-  CONSOLE: 'Console',
-  MOTOR: 'มอเตอร์',
-  POWER: 'ไฟ/ไม่เปิดติด',
-  OTHER: 'อื่นๆ',
-};
 
 const PRIORITY_COLOR: Record<ServiceTicket['priority'], string> = {
   URGENT: 'bg-brand-red text-white',
@@ -42,14 +25,35 @@ const PRIORITY_COLOR: Record<ServiceTicket['priority'], string> = {
   LOW: 'bg-status-success text-white',
 };
 
-const PRIORITY_LABEL: Record<ServiceTicket['priority'], string> = {
-  URGENT: 'เร่งด่วน',
-  NORMAL: 'ปกติ',
-  LOW: 'ไม่เร่ง',
-};
-
 export default function ServiceTicketsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
+
+  const STAGE_LABEL: Record<TicketStage, string> = {
+    RECEIVED: t('tickets.stageReceived'),
+    ASSIGNED: t('tickets.stageAssigned'),
+    EN_ROUTE: t('tickets.stageEnRoute'),
+    ARRIVED: t('tickets.stageArrived'),
+    REPAIRING: t('tickets.stageRepairing'),
+    CLOSED: t('tickets.stageClosed'),
+    CANCELLED: t('tickets.stageCancelled'),
+  };
+
+  const PROBLEM_LABEL: Record<ServiceTicket['problemType'], string> = {
+    BELT: t('tickets.problemBelt'),
+    NOISE: t('tickets.problemNoise'),
+    CONSOLE: t('tickets.problemConsole'),
+    MOTOR: t('tickets.problemMotor'),
+    POWER: t('tickets.problemPower'),
+    PM: t('tickets.problemPm'),
+    OTHER: t('tickets.problemOther'),
+  };
+
+  const PRIORITY_LABEL: Record<ServiceTicket['priority'], string> = {
+    URGENT: t('tickets.priorityUrgent'),
+    NORMAL: t('tickets.priorityNormal'),
+    LOW: t('tickets.priorityLow'),
+  };
   const [stageFilter, setStageFilter] = useState<TicketStage | ''>('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openCreate, setOpenCreate] = useState(false);
@@ -105,7 +109,7 @@ export default function ServiceTicketsPage() {
     onError: (err: unknown) => {
       const msg =
         (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ??
-        'สร้าง ticket ไม่สำเร็จ';
+        t('tickets.createFailed');
       setError(msg);
     },
   });
@@ -118,20 +122,20 @@ export default function ServiceTicketsPage() {
     },
   });
 
-  function nextStage(s: TicketStage): TicketStage | null {
-    const i = STAGES.indexOf(s);
-    return i >= 0 && i < STAGES.length - 1 ? STAGES[i + 1]! : null;
-  }
+  // Transition buttons are driven by the shared XState machine — whatever
+  // stage the ticket is in, we ask the machine which events are legal
+  // and render one button per event. Server validates the same way, so
+  // UI and API can never disagree on what's allowed.
 
   return (
     <>
       <PageHeader
-        title="Service Tickets"
-        subtitle="แจ้งซ่อมและติดตามงาน"
+        title={t('tickets.title')}
+        subtitle={t('tickets.subtitle')}
         action={
           <Button onClick={() => setOpenCreate(true)}>
             <span className="material-symbols-outlined !text-[18px]">add</span>
-            แจ้งซ่อมใหม่
+            {t('tickets.addButton')}
           </Button>
         }
       />
@@ -142,7 +146,7 @@ export default function ServiceTicketsPage() {
             onClick={() => setStageFilter('')}
             className={`px-3 py-1 rounded text-xs font-semibold ${!stageFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
           >
-            ทั้งหมด
+            {t('common.all')}
           </button>
           {STAGES.map((s) => (
             <button
@@ -159,45 +163,45 @@ export default function ServiceTicketsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">เลขที่</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ลูกค้า / เครื่อง</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ปัญหา</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ความเร่งด่วน</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">สถานะ</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colNo')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.customer')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('tickets.problemLabel')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('tickets.fieldPriority')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.status')}</th>
                 <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
               </tr>
             </thead>
             <tbody>
               {list.isLoading && (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400">กำลังโหลด...</td></tr>
+                <tr><td colSpan={6} className="text-center py-8 text-gray-400">{t('common.loading')}</td></tr>
               )}
               {!list.isLoading && list.data?.items.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400">ยังไม่มี ticket</td></tr>
+                <tr><td colSpan={6} className="text-center py-8 text-gray-400">{t('common.noData')}</td></tr>
               )}
-              {list.data?.items.map((t: ServiceTicket) => (
-                <tr key={t.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-brand-navy">{t.ticketNo}</td>
+              {list.data?.items.map((ticket: ServiceTicket) => (
+                <tr key={ticket.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-brand-navy">{ticket.ticketNo}</td>
                   <td className="px-4 py-3">
-                    <div className="text-sm font-semibold text-gray-900">{t.customer.name}</div>
-                    <div className="text-[10px] text-gray-500 font-mono">{t.asset.serialNo}</div>
+                    <div className="text-sm font-semibold text-gray-900">{ticket.customer.name}</div>
+                    <div className="text-[10px] text-gray-500 font-mono">{ticket.asset.serialNo}</div>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-700">
-                    <div className="font-semibold">{PROBLEM_LABEL[t.problemType]}</div>
-                    <div className="text-[10px] text-gray-500 line-clamp-1">{t.description}</div>
+                    <div className="font-semibold">{PROBLEM_LABEL[ticket.problemType]}</div>
+                    <div className="text-[10px] text-gray-500 line-clamp-1">{ticket.description}</div>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLOR[t.priority]}`}>
-                      {PRIORITY_LABEL[t.priority]}
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLOR[ticket.priority]}`}>
+                      {PRIORITY_LABEL[ticket.priority]}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
-                      {STAGE_LABEL[t.stage]}
+                      {STAGE_LABEL[ticket.stage]}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button size="sm" variant="outline" onClick={() => setSelectedId(t.id)}>
-                      ดูรายละเอียด
+                    <Button size="sm" variant="outline" onClick={() => setSelectedId(ticket.id)}>
+                      {t('tickets.openTicket')}
                     </Button>
                   </td>
                 </tr>
@@ -211,20 +215,20 @@ export default function ServiceTicketsPage() {
       <Modal
         open={!!selectedId}
         onClose={() => setSelectedId(null)}
-        title={detail.data?.ticketNo ?? 'Service Ticket'}
+        title={detail.data?.ticketNo ?? t('tickets.title')}
       >
-        {detail.isLoading && <div className="text-gray-400 text-sm py-4">กำลังโหลด...</div>}
+        {detail.isLoading && <div className="text-gray-400 text-sm py-4">{t('common.loading')}</div>}
         {detail.data && (
           <div className="space-y-4">
             <div className="text-xs">
-              <div><strong>ลูกค้า:</strong> {detail.data.customer.name}</div>
-              <div><strong>เครื่อง:</strong> {detail.data.asset.product.name} (<span className="font-mono">{detail.data.asset.serialNo}</span>)</div>
-              <div><strong>ปัญหา:</strong> {PROBLEM_LABEL[detail.data.problemType]} — <span className={`ml-1 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${PRIORITY_COLOR[detail.data.priority]}`}>{PRIORITY_LABEL[detail.data.priority]}</span></div>
+              <div><strong>{t('common.customer')}:</strong> {detail.data.customer.name}</div>
+              <div><strong>{t('common.product')}:</strong> {detail.data.asset.product.name} (<span className="font-mono">{detail.data.asset.serialNo}</span>)</div>
+              <div><strong>{t('tickets.problemLabel')}:</strong> {PROBLEM_LABEL[detail.data.problemType]} — <span className={`ml-1 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${PRIORITY_COLOR[detail.data.priority]}`}>{PRIORITY_LABEL[detail.data.priority]}</span></div>
               <div className="mt-2 p-2 bg-gray-50 rounded text-gray-700">{detail.data.description}</div>
             </div>
 
             <div>
-              <div className="text-xs font-bold text-gray-700 mb-2">Timeline</div>
+              <div className="text-xs font-bold text-gray-700 mb-2">{t('tickets.historyHeader')}</div>
               <div className="space-y-1.5">
                 {detail.data.events.map((e) => (
                   <div key={e.id} className="flex items-start gap-2 text-xs">
@@ -242,14 +246,25 @@ export default function ServiceTicketsPage() {
               </div>
             </div>
 
-            {detail.data.stage !== 'CLOSED' && nextStage(detail.data.stage) && (
+            {allowedTransitions(detail.data.stage).length > 0 && (
               <div className="pt-2 border-t border-gray-200">
-                <Button
-                  onClick={() => stageMut.mutate({ id: detail.data!.id, stage: nextStage(detail.data!.stage)! })}
-                  disabled={stageMut.isPending}
-                >
-                  → {STAGE_LABEL[nextStage(detail.data.stage)!]}
-                </Button>
+                <div className="text-xs font-semibold text-gray-600 mb-2">{t('tickets.nextAction')}</div>
+                <div className="flex flex-wrap gap-2">
+                  {allowedTransitions(detail.data.stage).map(({ event, to }) => {
+                    const isDestructive = to === 'CANCELLED';
+                    return (
+                      <Button
+                        key={event}
+                        size="sm"
+                        variant={isDestructive ? 'outline' : 'navy'}
+                        onClick={() => stageMut.mutate({ id: detail.data!.id, stage: to })}
+                        disabled={stageMut.isPending}
+                      >
+                        {TICKET_EVENT_LABELS_TH[event] ?? event} → {STAGE_LABEL[to]}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -260,27 +275,27 @@ export default function ServiceTicketsPage() {
       <Modal
         open={openCreate}
         onClose={() => setOpenCreate(false)}
-        title="แจ้งซ่อมใหม่"
+        title={t('tickets.addModalTitle')}
         footer={
           <>
-            <Button variant="outline" onClick={() => setOpenCreate(false)}>ยกเลิก</Button>
+            <Button variant="outline" onClick={() => setOpenCreate(false)}>{t('common.cancel')}</Button>
             <Button
               onClick={() => createMut.mutate()}
               disabled={!form.customerId || !form.assetId || !form.description || createMut.isPending}
             >
-              {createMut.isPending ? 'กำลังบันทึก...' : 'สร้าง ticket'}
+              {createMut.isPending ? t('common.saving') : t('tickets.createBtn')}
             </Button>
           </>
         }
       >
         <div className="mb-3">
-          <label className="block text-xs font-semibold text-gray-600 mb-1">ลูกค้า *</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">{t('tickets.fieldCustomer')}</label>
           <select
             value={form.customerId}
             onChange={(e) => setForm({ ...form, customerId: e.target.value, assetId: '' })}
             className="w-full px-3 py-2 border border-gray-300 rounded-brand text-sm focus:outline-none focus:border-brand-navy"
           >
-            <option value="">— เลือกลูกค้า —</option>
+            <option value="">{t('common.selectPlaceholder')}</option>
             {customers.data?.items.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -288,14 +303,14 @@ export default function ServiceTicketsPage() {
         </div>
 
         <div className="mb-3">
-          <label className="block text-xs font-semibold text-gray-600 mb-1">เครื่อง *</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">{t('tickets.fieldAsset')}</label>
           <select
             value={form.assetId}
             onChange={(e) => setForm({ ...form, assetId: e.target.value })}
             disabled={!form.customerId}
             className="w-full px-3 py-2 border border-gray-300 rounded-brand text-sm focus:outline-none focus:border-brand-navy disabled:bg-gray-100"
           >
-            <option value="">— เลือกเครื่อง —</option>
+            <option value="">{t('common.selectPlaceholder')}</option>
             {customerAssets.data?.items.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.product.name} · {a.serialNo}
@@ -306,7 +321,7 @@ export default function ServiceTicketsPage() {
 
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">ประเภทปัญหา *</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">{t('tickets.fieldProblemType')}</label>
             <select
               value={form.problemType}
               onChange={(e) => setForm({ ...form, problemType: e.target.value as ServiceTicket['problemType'] })}
@@ -318,7 +333,7 @@ export default function ServiceTicketsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">ความเร่งด่วน *</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">{t('tickets.fieldPriority')}</label>
             <select
               value={form.priority}
               onChange={(e) => setForm({ ...form, priority: e.target.value as ServiceTicket['priority'] })}
@@ -332,7 +347,7 @@ export default function ServiceTicketsPage() {
         </div>
 
         <div className="mb-3">
-          <label className="block text-xs font-semibold text-gray-600 mb-1">อธิบายปัญหา *</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">{t('tickets.fieldDescription')}</label>
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -343,7 +358,7 @@ export default function ServiceTicketsPage() {
 
         <Input
           id="t-loc"
-          label="ตำแหน่งเพิ่มเติม"
+          label={t('common.address')}
           value={form.locationDetail}
           onChange={(e) => setForm({ ...form, locationDetail: e.target.value })}
         />

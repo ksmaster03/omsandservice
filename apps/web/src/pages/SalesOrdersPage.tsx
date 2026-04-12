@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
@@ -14,15 +15,7 @@ import {
   type PaymentMilestone,
 } from '../lib/queries';
 
-const STATUS_LABEL: Record<SOStatus, string> = {
-  PENDING: 'รอดำเนินการ',
-  CONFIRMED: 'ยืนยันแล้ว',
-  IN_PRODUCTION: 'กำลังผลิต',
-  READY_TO_DELIVER: 'พร้อมส่งมอบ',
-  INSTALLED: 'ติดตั้งแล้ว',
-  COMPLETED: 'เสร็จสมบูรณ์',
-  CANCELLED: 'ยกเลิก',
-};
+// status labels resolved from i18n inside the component via useStatusLabel()
 
 const STATUS_COLOR: Record<SOStatus, string> = {
   PENDING: 'bg-gray-100 text-gray-600',
@@ -42,7 +35,18 @@ const MS_COLOR: Record<PaymentMilestone['status'], string> = {
 };
 
 export default function SalesOrdersPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
+
+  const STATUS_LABEL: Record<SOStatus, string> = {
+    PENDING: t('so.statusPending'),
+    CONFIRMED: t('so.statusConfirmed'),
+    IN_PRODUCTION: t('so.statusInProduction'),
+    READY_TO_DELIVER: t('so.statusReadyToDeliver'),
+    INSTALLED: t('so.statusInstalled'),
+    COMPLETED: t('so.statusCompleted'),
+    CANCELLED: t('so.statusCancelled'),
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openConvert, setOpenConvert] = useState(false);
 
@@ -84,12 +88,12 @@ export default function SalesOrdersPage() {
   return (
     <>
       <PageHeader
-        title="Sales Orders"
-        subtitle="คำสั่งซื้อและการชำระเงิน"
+        title={t('so.title')}
+        subtitle={t('so.subtitle')}
         action={
           <Button onClick={() => setOpenConvert(true)}>
             <span className="material-symbols-outlined !text-[18px]">transform</span>
-            แปลงจากใบเสนอราคา
+            {t('so.convertButton')}
           </Button>
         }
       />
@@ -99,23 +103,23 @@ export default function SalesOrdersPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">เลขที่</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ลูกค้า</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">มูลค่า</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">สถานะ</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">การชำระเงิน</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colNo')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.customer')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colAmount')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colStatus')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colPayments')}</th>
                 <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">กำลังโหลด...</td>
+                  <td colSpan={6} className="text-center py-8 text-gray-400">{t('common.loading')}</td>
                 </tr>
               )}
               {!isLoading && list?.items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">ยังไม่มี Sales Order</td>
+                  <td colSpan={6} className="text-center py-8 text-gray-400">{t('so.empty')}</td>
                 </tr>
               )}
               {list?.items.map((so: SalesOrder) => (
@@ -133,7 +137,7 @@ export default function SalesOrdersPage() {
                   <td className="px-4 py-3 text-center font-mono text-xs">{so.paymentProgress}</td>
                   <td className="px-4 py-3 text-right">
                     <Button size="sm" variant="outline" onClick={() => setSelectedId(so.id)}>
-                      ดูรายละเอียด
+                      {t('so.viewDetail')}
                     </Button>
                   </td>
                 </tr>
@@ -147,34 +151,34 @@ export default function SalesOrdersPage() {
       <Modal
         open={!!selectedId}
         onClose={() => setSelectedId(null)}
-        title={detail.data?.soNo ?? 'Sales Order'}
+        title={detail.data?.soNo ?? t('so.title')}
       >
-        {detail.isLoading && <div className="text-gray-400 text-sm py-4">กำลังโหลด...</div>}
+        {detail.isLoading && <div className="text-gray-400 text-sm py-4">{t('common.loading')}</div>}
         {detail.data && (
           <div className="space-y-4">
             <div className="text-xs text-gray-600">
-              <div>ลูกค้า: <span className="font-semibold text-gray-900">{detail.data.customer.name}</span></div>
+              <div>{t('common.customer')}: <span className="font-semibold text-gray-900">{detail.data.customer.name}</span></div>
               <div>
-                สถานะ:{' '}
+                {t('common.status')}:{' '}
                 <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLOR[detail.data.status]}`}>
                   {STATUS_LABEL[detail.data.status]}
                 </span>
               </div>
-              <div>ยอดรวม: <span className="font-semibold">฿{Number(detail.data.total).toLocaleString()}</span></div>
+              <div>{t('so.totalLabel')}: <span className="font-semibold">฿{Number(detail.data.total).toLocaleString()}</span></div>
               {detail.data.quotation && (
-                <div>อ้างอิงใบเสนอราคา: <span className="font-mono">{detail.data.quotation.quoteNo}</span></div>
+                <div>{t('so.referenceQuote')}: <span className="font-mono">{detail.data.quotation.quoteNo}</span></div>
               )}
             </div>
 
             <div>
-              <div className="text-xs font-bold text-gray-700 mb-2">รายการสินค้า</div>
+              <div className="text-xs font-bold text-gray-700 mb-2">{t('so.items')}</div>
               <div className="border border-gray-200 rounded-brand overflow-hidden">
                 <table className="w-full text-xs">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left px-2 py-1.5 font-semibold text-gray-600">สินค้า</th>
-                      <th className="text-center px-2 py-1.5 font-semibold text-gray-600">จำนวน</th>
-                      <th className="text-right px-2 py-1.5 font-semibold text-gray-600">ราคา/หน่วย</th>
+                      <th className="text-left px-2 py-1.5 font-semibold text-gray-600">{t('common.product')}</th>
+                      <th className="text-center px-2 py-1.5 font-semibold text-gray-600">{t('so.qty')}</th>
+                      <th className="text-right px-2 py-1.5 font-semibold text-gray-600">{t('so.unitPrice')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -193,7 +197,7 @@ export default function SalesOrdersPage() {
             </div>
 
             <div>
-              <div className="text-xs font-bold text-gray-700 mb-2">การชำระเงิน (Milestones)</div>
+              <div className="text-xs font-bold text-gray-700 mb-2">{t('so.milestones')}</div>
               <div className="space-y-1.5">
                 {detail.data.milestones.map((m) => (
                   <div
@@ -203,8 +207,8 @@ export default function SalesOrdersPage() {
                     <div>
                       <div className="text-xs font-semibold text-gray-900">{m.label}</div>
                       <div className="text-[10px] text-gray-500">
-                        กำหนด {new Date(m.dueDate).toLocaleDateString('th-TH')}
-                        {m.paidAt && ` · ชำระ ${new Date(m.paidAt).toLocaleDateString('th-TH')}`}
+                        {t('so.dueDate')} {new Date(m.dueDate).toLocaleDateString('th-TH')}
+                        {m.paidAt && ` · ${t('so.paidOn')} ${new Date(m.paidAt).toLocaleDateString('th-TH')}`}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -216,7 +220,7 @@ export default function SalesOrdersPage() {
                       </span>
                       {m.status !== 'PAID' && (
                         <Button size="sm" onClick={() => payMut.mutate(m.id)}>
-                          Mark Paid
+                          {t('so.markPaid')}
                         </Button>
                       )}
                     </div>
@@ -232,15 +236,15 @@ export default function SalesOrdersPage() {
       <Modal
         open={openConvert}
         onClose={() => setOpenConvert(false)}
-        title="สร้าง Sales Order จากใบเสนอราคา"
+        title={t('so.convertModalTitle')}
       >
         <p className="text-xs text-gray-500 mb-3">
-          แสดงเฉพาะใบเสนอราคาที่สถานะ <strong>ACCEPTED</strong> เท่านั้น เลือกรูปแบบชำระเงินที่ต้องการ
+          {t('so.convertHelp')}
         </p>
-        {acceptedQuotes.isLoading && <div className="text-gray-400 text-sm">กำลังโหลด...</div>}
+        {acceptedQuotes.isLoading && <div className="text-gray-400 text-sm">{t('common.loading')}</div>}
         {acceptedQuotes.data?.items.length === 0 && (
           <div className="text-center py-6 text-gray-400 text-xs">
-            ไม่มีใบเสนอราคาที่พร้อมแปลง
+            {t('so.noAccepted')}
           </div>
         )}
         <div className="space-y-2">
@@ -262,7 +266,7 @@ export default function SalesOrdersPage() {
                     onClick={() => convertMut.mutate({ quoteId: q.id, template: tpl })}
                     disabled={convertMut.isPending}
                   >
-                    {tpl === '30_30_40' ? '30/30/40' : tpl === '50_50' ? '50/50' : 'เต็มจำนวน'}
+                    {tpl === '30_30_40' ? '30/30/40' : tpl === '50_50' ? '50/50' : 'FULL'}
                   </Button>
                 ))}
               </div>

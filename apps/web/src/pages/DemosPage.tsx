@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
 import { listDemos, createDemo, listLeads, listProducts, type Demo } from '../lib/queries';
+import { downloadIcs, type IcsEvent } from '../lib/ics';
 
 const THAI_MONTHS = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -30,6 +32,7 @@ function sameDay(a: Date, b: Date) {
 }
 
 export default function DemosPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const now = new Date();
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() });
@@ -55,7 +58,7 @@ export default function DemosPage() {
     enabled: openCreate,
   });
 
-  const [form, setForm] = useState({ leadId: '', productId: '', scheduledAt: '', note: '' });
+  const [form, setForm] = useState({ leadId: '', productId: '', scheduledAt: '', note: '', location: '', address: '', contactName: '', contactPhone: '' });
   const [error, setError] = useState<string | null>(null);
 
   const createMut = useMutation({
@@ -65,11 +68,15 @@ export default function DemosPage() {
         productId: form.productId,
         scheduledAt: new Date(form.scheduledAt).toISOString(),
         note: form.note || undefined,
+        location: form.location || undefined,
+        address: form.address || undefined,
+        contactName: form.contactName || undefined,
+        contactPhone: form.contactPhone || undefined,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['demos'] });
       setOpenCreate(false);
-      setForm({ leadId: '', productId: '', scheduledAt: '', note: '' });
+      setForm({ leadId: '', productId: '', scheduledAt: '', note: '', location: '', address: '', contactName: '', contactPhone: '' });
       setError(null);
     },
     onError: (err: unknown) => {
@@ -126,13 +133,31 @@ export default function DemosPage() {
   return (
     <>
       <PageHeader
-        title="นัดหมาย Demo"
-        subtitle="ตารางเดโมสินค้าให้ลูกค้า"
+        title={t('demos.title')}
+        subtitle={t('demos.subtitle')}
         action={
-          <Button onClick={() => setOpenCreate(true)}>
-            <span className="material-symbols-outlined !text-[18px]">add</span>
-            นัดหมายใหม่
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!demos?.length) return;
+                const events: IcsEvent[] = demos.map((d) => ({
+                  uid: `demo-${d.id}@toptier-osm`,
+                  title: `Demo: ${d.product.name} — ${d.lead.customer.name}`,
+                  description: d.note ?? undefined,
+                  start: new Date(d.scheduledAt),
+                }));
+                downloadIcs(events, `demos-${cursor.year}${String(cursor.month + 1).padStart(2, '0')}.ics`);
+              }}
+            >
+              <span className="material-symbols-outlined !text-[18px]">download</span>
+              .ics
+            </Button>
+            <Button onClick={() => setOpenCreate(true)}>
+              <span className="material-symbols-outlined !text-[18px]">add</span>
+              {t('demos.addButton')}
+            </Button>
+          </div>
         }
       />
 
@@ -245,10 +270,27 @@ export default function DemosPage() {
                 </div>
                 <div className="text-sm font-semibold text-gray-900">{d.lead.customer.name}</div>
                 <div className="text-xs text-gray-600">{d.product.name}</div>
-                {d.lead.customer.phone && (
-                  <div className="text-[11px] text-gray-500 font-mono mt-1">☎ {d.lead.customer.phone}</div>
+                {d.location && (
+                  <div className="text-[11px] text-gray-700 mt-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined !text-[13px] text-gray-400">location_on</span>
+                    {d.location}
+                  </div>
                 )}
-                {d.note && <div className="text-[11px] text-gray-500 mt-1">{d.note}</div>}
+                {d.address && (
+                  <div className="text-[10px] text-gray-500 ml-4">{d.address}</div>
+                )}
+                {(d.contactName || d.contactPhone || d.lead.customer.phone) && (
+                  <div className="text-[11px] text-gray-600 mt-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined !text-[13px] text-gray-400">person</span>
+                    {d.contactName ?? d.lead.customer.name}
+                    {(d.contactPhone ?? d.lead.customer.phone) && (
+                      <a href={`tel:${d.contactPhone ?? d.lead.customer.phone}`} className="text-brand-red font-mono ml-1">
+                        ☎ {d.contactPhone ?? d.lead.customer.phone}
+                      </a>
+                    )}
+                  </div>
+                )}
+                {d.note && <div className="text-[11px] text-gray-500 mt-1 bg-gray-50 rounded p-1.5">{d.note}</div>}
               </div>
             ))}
           </div>
@@ -311,6 +353,38 @@ export default function DemosPage() {
           onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
           required
         />
+        <div className="border-t border-gray-200 pt-3 mt-1">
+          <div className="text-[10px] text-gray-400 mb-2 font-semibold uppercase">สถานที่ + ข้อมูลติดต่อ</div>
+          <Input
+            id="demo-loc"
+            label="สถานที่ Demo"
+            placeholder="เช่น สำนักงานลูกค้า, ศูนย์ Fitness"
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+          />
+          <Input
+            id="demo-addr"
+            label="ที่อยู่"
+            placeholder="ที่อยู่เต็ม / Google Maps link"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              id="demo-cname"
+              label="ชื่อผู้ติดต่อ"
+              value={form.contactName}
+              onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+            />
+            <Input
+              id="demo-cphone"
+              label="เบอร์ติดต่อ"
+              type="tel"
+              value={form.contactPhone}
+              onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
+            />
+          </div>
+        </div>
         <Input
           id="demo-note"
           label="หมายเหตุ"

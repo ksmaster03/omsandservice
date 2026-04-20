@@ -42,7 +42,7 @@ export default function FeedbackButton({ source = 'admin' }: { source?: string }
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-bold text-lg">แจ้งปัญหา / แนะนำ</h2>
               <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-gray-100">
-                <span className="material-symbols-outlined !text-[20px] text-gray-500">close</span>
+                <span className="material-symbols-outlined !text-[20px] text-gray-700">close</span>
               </button>
             </div>
 

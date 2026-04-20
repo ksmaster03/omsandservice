@@ -140,12 +140,47 @@ const customerDataRoutes: FastifyPluginAsync = async (app) => {
             note: 'แจ้งซ่อมผ่าน Customer PWA',
           },
         },
+        photos: input.photoKeys && input.photoKeys.length > 0
+          ? {
+              create: input.photoKeys.map((p) => ({
+                s3Key: p.s3Key,
+                size: p.size,
+              })),
+            }
+          : undefined,
       },
       include: {
         asset: { include: { product: { select: { id: true, name: true } } } },
+        photos: true,
       },
     });
     return reply.code(201).send({ ok: true, data: ticket });
+  });
+
+  // ─── POST /customer/tickets/upload ─── customer pre-upload of ticket photos
+  app.post('/tickets/upload', async (req, reply) => {
+    const part = await req.file({ limits: { fileSize: 20 * 1024 * 1024 } });
+    if (!part) {
+      return reply.code(400).send({ ok: false, error: { code: 'NO_FILE', message: 'No file uploaded' } });
+    }
+    const { isAllowedImage, saveUpload } = await import('../lib/storage');
+    if (!isAllowedImage(part.mimetype)) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: 'INVALID_TYPE', message: `Unsupported image type: ${part.mimetype}` },
+      });
+    }
+    const { customerId } = req.customerSession!;
+    const stored = await saveUpload('tickets', `pending-${customerId}`, part);
+    return reply.code(201).send({
+      ok: true,
+      data: {
+        s3Key: stored.key,
+        url: stored.url,
+        size: stored.size,
+        contentType: stored.mime,
+      },
+    });
   });
 
   // ─── GET /customer/notifications ─── my notifications (MVP: static from DB)

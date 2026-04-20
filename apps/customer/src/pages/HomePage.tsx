@@ -47,7 +47,7 @@ export default function HomePage() {
             <div className="font-display font-black text-xl text-brand-navy leading-none mt-1">
               {assets.data?.length ?? '—'}
             </div>
-            <div className="text-[10px] text-gray-500 mt-0.5">เครื่อง</div>
+            <div className="text-[10px] text-gray-700 mt-0.5">เครื่อง</div>
           </Link>
           <Link
             to="/tickets"
@@ -59,7 +59,7 @@ export default function HomePage() {
             <div className="font-display font-black text-xl text-brand-navy leading-none mt-1">
               {openTickets.length}
             </div>
-            <div className="text-[10px] text-gray-500 mt-0.5">งานค้าง</div>
+            <div className="text-[10px] text-gray-700 mt-0.5">งานค้าง</div>
           </Link>
           <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-3 text-center">
             <span className="material-symbols-outlined !text-2xl text-status-info" aria-hidden="true">
@@ -68,7 +68,7 @@ export default function HomePage() {
             <div className="font-display font-black text-xl text-brand-navy leading-none mt-1">
               {expiringAssets.length}
             </div>
-            <div className="text-[10px] text-gray-500 mt-0.5">ใกล้หมดประกัน</div>
+            <div className="text-[10px] text-gray-700 mt-0.5">ใกล้หมดประกัน</div>
           </div>
         </div>
 
@@ -87,7 +87,7 @@ export default function HomePage() {
                   className="block bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-3"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <div className="font-mono text-[11px] text-gray-500">{t.ticketNo}</div>
+                    <div className="font-mono text-[11px] text-gray-700">{t.ticketNo}</div>
                     <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       t.priority === 'URGENT' ? 'bg-brand-red text-white' :
                       t.priority === 'NORMAL' ? 'bg-brand-gold text-brand-navy' :
@@ -97,7 +97,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="text-sm font-semibold text-gray-900">{t.asset.product.name}</div>
-                  <div className="text-xs text-gray-500 line-clamp-1">{t.description}</div>
+                  <div className="text-xs text-gray-700 line-clamp-1">{t.description}</div>
                 </Link>
               ))}
             </div>
@@ -129,12 +129,12 @@ export default function HomePage() {
               {pendingRenewals.map((r) => (
                 <div key={r.id} className="bg-white rounded-brand-lg shadow-brand-sm border border-brand-gold p-3">
                   <div className="text-sm font-semibold">{r.asset.product.name}</div>
-                  <div className="text-[11px] text-gray-500 font-mono">{r.asset.serialNo}</div>
+                  <div className="text-[11px] text-gray-700 font-mono">{r.asset.serialNo}</div>
                   <div className="mt-2 flex items-center justify-between">
                     <div className="text-brand-red font-display font-black">
                       ฿{Number(r.price).toLocaleString()}
                     </div>
-                    <div className="text-[10px] text-gray-500">
+                    <div className="text-[10px] text-gray-700">
                       ถึง {r.newEndDate ? new Date(r.newEndDate).toLocaleDateString('th-TH') : '–'}
                     </div>
                   </div>

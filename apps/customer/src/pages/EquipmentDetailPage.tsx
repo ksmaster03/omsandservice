@@ -22,8 +22,8 @@ export default function EquipmentDetailPage() {
     enabled: !!id,
   });
 
-  if (isLoading) return <div className="text-center py-10 text-gray-400">กำลังโหลด...</div>;
-  if (!data) return <div className="text-center py-10 text-gray-400">ไม่พบข้อมูล</div>;
+  if (isLoading) return <div className="text-center py-10 text-gray-600">กำลังโหลด...</div>;
+  if (!data) return <div className="text-center py-10 text-gray-600">ไม่พบข้อมูล</div>;
 
   return (
     <>
@@ -39,13 +39,13 @@ export default function EquipmentDetailPage() {
       <div className="px-4 space-y-4">
         {/* Warranty card */}
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">ประกัน</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-2">ประกัน</div>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm font-semibold text-gray-900">
                 {new Date(data.warrantyEnd).toLocaleDateString('th-TH')}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-700">
                 {data.warrantyDaysLeft > 0 ? `เหลืออีก ${data.warrantyDaysLeft} วัน` : `หมดแล้ว ${Math.abs(data.warrantyDaysLeft)} วัน`}
               </div>
             </div>
@@ -58,26 +58,26 @@ export default function EquipmentDetailPage() {
         {/* Info grid */}
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 divide-y divide-gray-100">
           <div className="px-4 py-3 flex justify-between text-xs">
-            <span className="text-gray-500">แบรนด์</span>
+            <span className="text-gray-700">แบรนด์</span>
             <span className="font-semibold">{data.product.brand}</span>
           </div>
           <div className="px-4 py-3 flex justify-between text-xs">
-            <span className="text-gray-500">SKU</span>
+            <span className="text-gray-700">SKU</span>
             <span className="font-mono">{data.product.sku}</span>
           </div>
           <div className="px-4 py-3 flex justify-between text-xs">
-            <span className="text-gray-500">ติดตั้งเมื่อ</span>
+            <span className="text-gray-700">ติดตั้งเมื่อ</span>
             <span className="font-semibold">{new Date(data.installedAt).toLocaleDateString('th-TH')}</span>
           </div>
           {data.locationDetail && (
             <div className="px-4 py-3 flex justify-between text-xs">
-              <span className="text-gray-500">ตำแหน่ง</span>
+              <span className="text-gray-700">ตำแหน่ง</span>
               <span className="font-semibold">{data.locationDetail}</span>
             </div>
           )}
           {data.nextPmDate && (
             <div className="px-4 py-3 flex justify-between text-xs">
-              <span className="text-gray-500">PM ถัดไป</span>
+              <span className="text-gray-700">PM ถัดไป</span>
               <span className="font-semibold">{new Date(data.nextPmDate).toLocaleDateString('th-TH')}</span>
             </div>
           )}
@@ -92,10 +92,10 @@ export default function EquipmentDetailPage() {
                 <div key={pm.id} className="px-4 py-3 flex items-center justify-between text-xs">
                   <div>
                     <div className="font-semibold">{new Date(pm.scheduledAt).toLocaleDateString('th-TH')}</div>
-                    {pm.note && <div className="text-gray-500 text-[11px] mt-0.5">{pm.note}</div>}
+                    {pm.note && <div className="text-gray-700 text-[11px] mt-0.5">{pm.note}</div>}
                   </div>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    pm.status === 'COMPLETED' ? 'bg-status-success-light text-status-success' : 'bg-gray-100 text-gray-500'
+                    pm.status === 'COMPLETED' ? 'bg-status-success-light text-status-success' : 'bg-gray-100 text-gray-700'
                   }`}>
                     {pm.status === 'COMPLETED' ? '✓ เสร็จ' : pm.status}
                   </span>
@@ -117,13 +117,13 @@ export default function EquipmentDetailPage() {
                   className="block px-4 py-3 text-xs hover:bg-gray-50"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="font-mono text-gray-500">{t.ticketNo}</div>
-                    <div className="text-[10px] text-gray-400">
+                    <div className="font-mono text-gray-700">{t.ticketNo}</div>
+                    <div className="text-[10px] text-gray-600">
                       {new Date(t.createdAt).toLocaleDateString('th-TH')}
                     </div>
                   </div>
                   <div className="font-semibold text-gray-900 mt-0.5">{t.problemType}</div>
-                  <div className="text-[10px] text-gray-500">สถานะ: {t.stage}</div>
+                  <div className="text-[10px] text-gray-700">สถานะ: {t.stage}</div>
                 </Link>
               ))}
             </div>

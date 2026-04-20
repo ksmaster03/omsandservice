@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import Spinner from '../components/Spinner';
 import Button from '../components/Button';
 import api from '../lib/api';
 
@@ -81,14 +82,14 @@ export default function SettingsPage() {
       />
 
       <div className="p-4 sm:p-6 max-w-3xl">
-        {isLoading && <div className="text-center py-8 text-gray-400">{t('common.loading')}</div>}
+        {isLoading && <Spinner />}
 
         {!isLoading && (
           <div className="space-y-6">
             {Object.entries(groups).map(([groupName, items]) => (
               <div key={groupName} className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
                 <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-b border-gray-200">
-                  <span className="material-symbols-outlined !text-[20px] text-gray-500">
+                  <span className="material-symbols-outlined !text-[20px] text-gray-700">
                     {GROUP_ICONS[groupName] ?? 'settings'}
                   </span>
                   <h3 className="font-semibold text-sm text-gray-800">{groupName}</h3>
@@ -125,7 +126,7 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-brand text-sm focus:outline-none focus:border-brand-red font-mono"
                       />
                       {item.updatedAt && (
-                        <div className="text-[10px] text-gray-400 mt-0.5">
+                        <div className="text-[10px] text-gray-600 mt-0.5">
                           Updated: {new Date(item.updatedAt).toLocaleString('th-TH')}
                         </div>
                       )}
@@ -156,7 +157,7 @@ export default function SettingsPage() {
               )}
             </div>
 
-            <div className="bg-gray-50 rounded-brand border border-gray-200 p-4 text-xs text-gray-500">
+            <div className="bg-gray-50 rounded-brand border border-gray-200 p-4 text-xs text-gray-700">
               <div className="font-semibold text-gray-700 mb-1">หมายเหตุ</div>
               <ul className="list-disc pl-4 space-y-1">
                 <li>ค่า Password/Secret จะถูก mask ด้วย •• เมื่อแสดงผล — บันทึกค่าใหม่ได้โดยพิมพ์ทับ</li>

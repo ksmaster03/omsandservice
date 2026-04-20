@@ -29,8 +29,8 @@ export default function TicketDetailPage() {
     refetchInterval: 15_000, // Live updates while the job is in progress
   });
 
-  if (isLoading) return <div className="text-center py-10 text-gray-400">กำลังโหลด...</div>;
-  if (!data) return <div className="text-center py-10 text-gray-400">ไม่พบ ticket</div>;
+  if (isLoading) return <div className="text-center py-10 text-gray-600">กำลังโหลด...</div>;
+  if (!data) return <div className="text-center py-10 text-gray-600">ไม่พบ ticket</div>;
 
   const currentIdx = TIMELINE_ORDER.indexOf(data.stage);
 
@@ -51,7 +51,7 @@ export default function TicketDetailPage() {
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">สถานะปัจจุบัน</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700">สถานะปัจจุบัน</div>
               <div className="font-display font-black text-lg text-brand-navy">{STAGE_LABEL[data.stage]}</div>
             </div>
             <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${PRIORITY_COLOR[data.priority]}`}>
@@ -60,18 +60,18 @@ export default function TicketDetailPage() {
           </div>
           <div className="text-xs text-gray-700 bg-gray-50 rounded p-2">{data.description}</div>
           {data.locationDetail && (
-            <div className="text-[11px] text-gray-500 mt-2">📍 {data.locationDetail}</div>
+            <div className="text-[11px] text-gray-700 mt-2">📍 {data.locationDetail}</div>
           )}
         </div>
 
         {/* Tech info if assigned */}
         {data.tech && (
           <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-4">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">ช่างที่ดูแล</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-2">ช่างที่ดูแล</div>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-bold text-gray-900">{data.tech.name}</div>
-                {data.tech.phone && <div className="text-[11px] text-gray-500">{data.tech.phone}</div>}
+                {data.tech.phone && <div className="text-[11px] text-gray-700">{data.tech.phone}</div>}
               </div>
               {data.tech.phone && (
                 <a
@@ -88,7 +88,7 @@ export default function TicketDetailPage() {
 
         {/* Stepper timeline */}
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">ความคืบหน้า</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-3">ความคืบหน้า</div>
           <div className="flex items-center justify-between">
             {TIMELINE_ORDER.map((stage, i) => {
               const done = i < currentIdx;
@@ -101,12 +101,12 @@ export default function TicketDetailPage() {
                         ? 'bg-status-success text-white'
                         : active
                         ? 'bg-brand-red text-white animate-pulse'
-                        : 'bg-gray-200 text-gray-400'
+                        : 'bg-gray-200 text-gray-600'
                     }`}
                   >
                     {done ? '✓' : i + 1}
                   </div>
-                  <div className={`text-[9px] mt-1 text-center ${active ? 'font-bold text-brand-navy' : 'text-gray-400'}`}>
+                  <div className={`text-[9px] mt-1 text-center ${active ? 'font-bold text-brand-navy' : 'text-gray-600'}`}>
                     {STAGE_LABEL[stage].split(' ')[0]}
                   </div>
                   {i < TIMELINE_ORDER.length - 1 && (
@@ -120,15 +120,15 @@ export default function TicketDetailPage() {
 
         {/* Event log */}
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">ประวัติเหตุการณ์</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-3">ประวัติเหตุการณ์</div>
           <div className="space-y-3">
             {data.events.map((e) => (
               <div key={e.id} className="flex items-start gap-2 text-xs">
                 <div className="w-2 h-2 rounded-full bg-brand-red mt-1.5 flex-shrink-0"></div>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">{STAGE_LABEL[e.stage]}</div>
-                  {e.note && <div className="text-gray-500 text-[11px]">{e.note}</div>}
-                  <div className="text-[10px] text-gray-400">
+                  {e.note && <div className="text-gray-700 text-[11px]">{e.note}</div>}
+                  <div className="text-[10px] text-gray-600">
                     {new Date(e.createdAt).toLocaleString('th-TH')}
                   </div>
                 </div>

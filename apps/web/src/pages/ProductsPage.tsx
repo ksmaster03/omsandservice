@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
+import EmptyState from '../components/EmptyState';
+import TableSkeleton from '../components/TableSkeleton';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { listProducts, createProduct, updateProduct, type Product } from '../lib/queries';
 import { useAuth } from '../store/auth';
 
@@ -154,8 +158,17 @@ export default function ProductsPage() {
   const toggleMut = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       updateProduct(id, { active } as never),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['products'] });
+      setToggleTarget(null);
+      toast.success(vars.active ? 'เปิดใช้งานสินค้าแล้ว' : 'ปิดใช้งานสินค้าแล้ว');
+    },
+    onError: () => {
+      toast.error('อัปเดตสถานะสินค้าไม่สำเร็จ');
+    },
   });
+
+  const [toggleTarget, setToggleTarget] = useState<Product | null>(null);
 
   function closeEdit() {
     setEditing(null);
@@ -181,7 +194,7 @@ export default function ProductsPage() {
       <div className="p-4 sm:p-6">
         <div className="mb-4 flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-400">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-600">
               search
             </span>
             <input
@@ -202,7 +215,7 @@ export default function ProductsPage() {
                 setPage(1);
               }}
               className={`px-3 py-1 rounded text-xs font-semibold ${
-                !brandFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'
+                !brandFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'
               }`}
             >
               {t('products.allBrands')}
@@ -215,7 +228,7 @@ export default function ProductsPage() {
                   setPage(1);
                 }}
                 className={`px-3 py-1 rounded text-xs font-semibold ${
-                  brandFilter === b ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'
+                  brandFilter === b ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'
                 }`}
               >
                 {brandLabel[b]}
@@ -231,7 +244,7 @@ export default function ProductsPage() {
                   setPage(1);
                 }}
                 className={`px-3 py-1 rounded text-xs font-semibold ${
-                  statusFilter === k ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'
+                  statusFilter === k ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'
                 }`}
               >
                 {k === 'all' ? t('common.all') : k === 'active' ? t('common.active') : t('common.inactive')}
@@ -242,30 +255,33 @@ export default function ProductsPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[860px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('products.colSku')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('products.colName')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('products.colBrand')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('products.colCategory')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('products.colPrice')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('products.colWarranty')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('products.colPm')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.status')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('products.colSku')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('products.colName')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('products.colBrand')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('products.colCategory')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('products.colPrice')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('products.colWarranty')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('products.colPm')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('common.status')}</th>
                 {isAdmin && (
-                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
+                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('common.actions')}</th>
                 )}
               </tr>
             </thead>
             <tbody>
-              {isLoading && (
-                <tr>
-                  <td colSpan={isAdmin ? 9 : 8} className="text-center py-8 text-gray-400">{t('common.loading')}</td>
-                </tr>
-              )}
+              {isLoading && <TableSkeleton rows={8} columns={isAdmin ? 9 : 8} />}
               {!isLoading && data?.items.length === 0 && (
                 <tr>
-                  <td colSpan={isAdmin ? 9 : 8} className="text-center py-8 text-gray-400">{t('common.noData')}</td>
+                  <td colSpan={isAdmin ? 9 : 8} className="p-0">
+                    <EmptyState
+                      icon="fitness_center"
+                      title="ยังไม่มีสินค้า"
+                      description={isAdmin ? 'เริ่มต้นจากการเพิ่มสินค้าใหม่' : 'กรุณาติดต่อ admin เพื่อเพิ่มสินค้า'}
+                      cta={isAdmin ? { label: '+ เพิ่มสินค้า', onClick: () => setOpenCreate(true) } : undefined}
+                    />
+                  </td>
                 </tr>
               )}
               {data?.items.map((p) => (
@@ -282,12 +298,12 @@ export default function ProductsPage() {
                   <td className="px-4 py-3 text-center">
                     <button
                       type="button"
-                      onClick={() => isAdmin && toggleMut.mutate({ id: p.id, active: !p.active })}
+                      onClick={() => isAdmin && setToggleTarget(p)}
                       disabled={!isAdmin || toggleMut.isPending}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${
                         p.active
                           ? 'bg-status-success-light text-status-success hover:bg-status-success hover:text-white disabled:hover:bg-status-success-light disabled:hover:text-status-success'
-                          : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                       title={isAdmin ? (p.active ? t('customers.toggleActive') : t('customers.toggleInactive')) : 'Admin only'}
                     >
@@ -377,6 +393,19 @@ export default function ProductsPage() {
       >
         <ProductForm form={form} setForm={setForm} error={error} isEdit />
       </Modal>
+
+      <ConfirmDialog
+        open={!!toggleTarget}
+        title={toggleTarget?.active ? 'ปิดใช้งานสินค้า?' : 'เปิดใช้งานสินค้า?'}
+        description={toggleTarget?.active
+          ? `"${toggleTarget?.name}" จะถูกซ่อนจากรายการและหยุดใช้ในออเดอร์ใหม่`
+          : `"${toggleTarget?.name}" จะกลับมาใช้งานได้ตามปกติ`}
+        confirmLabel={toggleTarget?.active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+        variant={toggleTarget?.active ? 'danger' : 'primary'}
+        loading={toggleMut.isPending}
+        onConfirm={() => toggleTarget && toggleMut.mutate({ id: toggleTarget.id, active: !toggleTarget.active })}
+        onCancel={() => setToggleTarget(null)}
+      />
     </>
   );
 }
@@ -480,7 +509,7 @@ function ProductForm({
         />
       </div>
       <div className="border-t border-gray-200 pt-3 mt-1">
-        <div className="text-[10px] text-gray-400 mb-2 font-semibold uppercase">WMS Integration</div>
+        <div className="text-[10px] text-gray-600 mb-2 font-semibold uppercase">WMS Integration</div>
         <Input
           id="p-wms"
           label="WMS Part No"

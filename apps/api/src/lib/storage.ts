@@ -16,7 +16,7 @@ import type { MultipartFile } from '@fastify/multipart';
 
 const ROOT = path.resolve(process.cwd(), 'uploads');
 
-export type UploadKind = 'installs' | 'tickets' | 'pm';
+export type UploadKind = 'installs' | 'tickets' | 'pm' | 'feedback';
 
 export interface StoredFile {
   key: string; // relative path stored in DB
@@ -35,12 +35,14 @@ function extFromMime(mime: string): string {
     'video/mp4': 'mp4',
     'video/quicktime': 'mov',
     'video/webm': 'webm',
+    'application/pdf': 'pdf',
   };
   return map[mime.toLowerCase()] ?? 'bin';
 }
 
 const ALLOWED_IMAGE = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 const ALLOWED_VIDEO = new Set(['video/mp4', 'video/quicktime', 'video/webm']);
+const ALLOWED_FEEDBACK = new Set([...ALLOWED_IMAGE, 'application/pdf']);
 
 export function isAllowedImage(mime: string): boolean {
   return ALLOWED_IMAGE.has(mime.toLowerCase());
@@ -48,6 +50,10 @@ export function isAllowedImage(mime: string): boolean {
 
 export function isAllowedVideo(mime: string): boolean {
   return ALLOWED_VIDEO.has(mime.toLowerCase());
+}
+
+export function isAllowedFeedback(mime: string): boolean {
+  return ALLOWED_FEEDBACK.has(mime.toLowerCase());
 }
 
 export async function saveUpload(

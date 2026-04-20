@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import Spinner from '../components/Spinner';
+import TableSkeleton from '../components/TableSkeleton';
+import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
@@ -53,8 +56,15 @@ const STATUS_COLOR: Record<string, string> = {
   OPEN: 'bg-status-info-light text-status-info',
   IN_PROGRESS: 'bg-status-warning-light text-brand-gold-text',
   RESOLVED: 'bg-status-success-light text-status-success',
-  CLOSED: 'bg-gray-200 text-gray-600',
-  WONT_FIX: 'bg-gray-200 text-gray-500',
+  CLOSED: 'bg-gray-200 text-gray-700',
+  WONT_FIX: 'bg-gray-200 text-gray-600',
+};
+const STATUS_ICON: Record<string, string> = {
+  OPEN: 'radio_button_unchecked',
+  IN_PROGRESS: 'progress_activity',
+  RESOLVED: 'check_circle',
+  CLOSED: 'cancel',
+  WONT_FIX: 'do_not_disturb_on',
 };
 const STATUS_LABELS: Record<string, string> = {
   OPEN: 'เปิด',
@@ -64,7 +74,7 @@ const STATUS_LABELS: Record<string, string> = {
   WONT_FIX: 'ไม่แก้ไข',
 };
 const PRIORITY_COLOR: Record<string, string> = {
-  LOW: 'text-gray-500',
+  LOW: 'text-gray-700',
   MEDIUM: 'text-brand-gold-text',
   HIGH: 'text-brand-red',
   CRITICAL: 'text-white bg-brand-red',
@@ -124,11 +134,11 @@ export default function FeedbackPage() {
 
       <div className="p-4 sm:p-6">
         <div className="mb-4 flex gap-1 bg-gray-100 rounded-brand p-1 w-fit flex-wrap">
-          <button onClick={() => setStatusFilter('')} className={`px-3 py-1 rounded text-xs font-semibold ${!statusFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}>
+          <button onClick={() => setStatusFilter('')} className={`px-3 py-1 rounded text-xs font-semibold ${!statusFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}>
             {t('common.all')}
           </button>
           {Object.entries(STATUS_LABELS).map(([k, v]) => (
-            <button key={k} onClick={() => setStatusFilter(k)} className={`px-3 py-1 rounded text-xs font-semibold ${statusFilter === k ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}>
+            <button key={k} onClick={() => setStatusFilter(k)} className={`px-3 py-1 rounded text-xs font-semibold ${statusFilter === k ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}>
               {v}
             </button>
           ))}
@@ -136,25 +146,31 @@ export default function FeedbackPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[700px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">ประเภท</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">หัวข้อ</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">ผู้แจ้ง</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-500">Priority</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-500">{t('common.status')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-500">ตอบ</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-500"></th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">ประเภท</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">หัวข้อ</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">ผู้แจ้ง</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-700">Priority</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-700">{t('common.status')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-700">ตอบ</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-700"></th>
               </tr>
             </thead>
             <tbody>
-              {list.isLoading && <tr><td colSpan={7} className="text-center py-8 text-gray-400">{t('common.loading')}</td></tr>}
-              {!list.isLoading && list.data?.items.length === 0 && <tr><td colSpan={7} className="text-center py-8 text-gray-400">ยังไม่มี feedback</td></tr>}
+              {list.isLoading && <TableSkeleton rows={8} columns={7} />}
+              {!list.isLoading && list.data?.items.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-0">
+                    <EmptyState icon="feedback" title="ยังไม่มี feedback" description="เมื่อผู้ใช้แจ้งปัญหา จะเห็นที่นี่" variant="compact" />
+                  </td>
+                </tr>
+              )}
               {list.data?.items.map((fb) => (
                 <tr key={fb.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined !text-[16px] text-gray-500">{TYPE_ICONS[fb.type] ?? 'chat'}</span>
+                      <span className="material-symbols-outlined !text-[16px] text-gray-700">{TYPE_ICONS[fb.type] ?? 'chat'}</span>
                       <span className="text-xs">{TYPE_LABELS[fb.type] ?? fb.type}</span>
                     </div>
                   </td>
@@ -164,9 +180,12 @@ export default function FeedbackPage() {
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${PRIORITY_COLOR[fb.priority] ?? ''}`}>{fb.priority}</span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLOR[fb.status]}`}>{STATUS_LABELS[fb.status]}</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLOR[fb.status]}`}>
+                      <span className="material-symbols-outlined !text-[14px]" aria-hidden="true">{STATUS_ICON[fb.status]}</span>
+                      {STATUS_LABELS[fb.status]}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-center text-xs text-gray-500">{fb._count.replies}</td>
+                  <td className="px-4 py-3 text-center text-xs text-gray-700">{fb._count.replies}</td>
                   <td className="px-4 py-3 text-right">
                     <Button size="sm" variant="outline" onClick={() => { setSelectedId(fb.id); setUpdateStatus(fb.status); setResolution(fb.resolution ?? ''); }}>
                       {t('common.details')}
@@ -181,14 +200,14 @@ export default function FeedbackPage() {
 
       {/* Detail + manage modal */}
       <Modal open={!!selectedId} onClose={() => setSelectedId(null)} title={detail.data ? `#${detail.data.id.slice(0, 8)} — ${detail.data.subject}` : 'Feedback'}>
-        {detail.isLoading && <div className="text-center py-4 text-gray-400">{t('common.loading')}</div>}
+        {detail.isLoading && <Spinner />}
         {detail.data && (
           <div className="space-y-4 text-sm">
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div><span className="text-gray-500">ประเภท:</span> <strong>{TYPE_LABELS[detail.data.type]}</strong></div>
-              <div><span className="text-gray-500">Priority:</span> <strong className={PRIORITY_COLOR[detail.data.priority]}>{detail.data.priority}</strong></div>
-              <div><span className="text-gray-500">ผู้แจ้ง:</span> <strong>{detail.data.submitterName ?? 'ไม่ระบุ'}</strong></div>
-              <div><span className="text-gray-500">Source:</span> <strong>{detail.data.source}</strong></div>
+              <div><span className="text-gray-700">ประเภท:</span> <strong>{TYPE_LABELS[detail.data.type]}</strong></div>
+              <div><span className="text-gray-700">Priority:</span> <strong className={PRIORITY_COLOR[detail.data.priority]}>{detail.data.priority}</strong></div>
+              <div><span className="text-gray-700">ผู้แจ้ง:</span> <strong>{detail.data.submitterName ?? 'ไม่ระบุ'}</strong></div>
+              <div><span className="text-gray-700">Source:</span> <strong>{detail.data.source}</strong></div>
             </div>
 
             <div className="bg-gray-50 rounded-brand p-3 text-xs whitespace-pre-wrap">{detail.data.description}</div>
@@ -230,7 +249,7 @@ export default function FeedbackPage() {
                   <div key={r.id} className={`rounded-brand p-2 text-xs ${r.isInternal ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'}`}>
                     <div className="flex justify-between mb-1">
                       <span className="font-semibold">{r.authorName} {r.authorRole ? `(${r.authorRole})` : ''}</span>
-                      <span className="text-[10px] text-gray-400">{new Date(r.createdAt).toLocaleString('th-TH')}</span>
+                      <span className="text-[10px] text-gray-600">{new Date(r.createdAt).toLocaleString('th-TH')}</span>
                     </div>
                     {r.message}
                   </div>

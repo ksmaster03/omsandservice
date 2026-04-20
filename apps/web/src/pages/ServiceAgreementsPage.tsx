@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import TableSkeleton from '../components/TableSkeleton';
+import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
@@ -10,7 +12,7 @@ import api from '../lib/api';
 
 interface SA { id: string; agreementNo: string; type: string; status: string; price: string; startDate: string; endDate: string; autoRenew: boolean; note: string | null; customer: { id: string; name: string } }
 
-const STATUS_COLOR: Record<string, string> = { DRAFT: 'bg-gray-200 text-gray-600', ACTIVE: 'bg-status-success-light text-status-success', EXPIRED: 'bg-brand-red-light text-brand-red', CANCELLED: 'bg-gray-200 text-gray-500' };
+const STATUS_COLOR: Record<string, string> = { DRAFT: 'bg-gray-200 text-gray-600', ACTIVE: 'bg-status-success-light text-status-success', EXPIRED: 'bg-brand-red-light text-brand-red', CANCELLED: 'bg-gray-200 text-gray-700' };
 
 export default function ServiceAgreementsPage() {
   const { t } = useTranslation();
@@ -47,21 +49,27 @@ export default function ServiceAgreementsPage() {
       <div className="p-4 sm:p-6">
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[800px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">เลขที่</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">{t('common.customer')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">ประเภท</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-500">ราคา</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-500">ระยะเวลา</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-500">{t('common.status')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-500">Auto Renew</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-500"></th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">เลขที่</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">{t('common.customer')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">ประเภท</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-700">ราคา</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-700">ระยะเวลา</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-700">{t('common.status')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase text-gray-700">Auto Renew</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-700"></th>
               </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan={8} className="text-center py-8 text-gray-400">{t('common.loading')}</td></tr>}
-              {!isLoading && (!data || data.length === 0) && <tr><td colSpan={8} className="text-center py-8 text-gray-400">ยังไม่มี Service Agreement</td></tr>}
+              {isLoading && <TableSkeleton rows={8} columns={8} />}
+              {!isLoading && (!data || data.length === 0) && (
+                <tr>
+                  <td colSpan={8} className="p-0">
+                    <EmptyState icon="handshake" title="ยังไม่มี Service Agreement" variant="compact" />
+                  </td>
+                </tr>
+              )}
               {data?.map((sa) => (
                 <tr key={sa.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono text-xs text-brand-navy font-semibold">{sa.agreementNo}</td>

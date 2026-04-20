@@ -97,7 +97,7 @@ export default function DashboardPage() {
                 <ProgressBar label="Pending" value={pmCompliance.pending} max={pmCompliance.total} color="bg-brand-gold" />
                 <ProgressBar label="Overdue" value={pmCompliance.overdue} max={pmCompliance.total} color="bg-brand-red" />
                 <div className="text-center text-2xl font-bold text-brand-navy mt-2">{pmCompliance.complianceRate}%</div>
-                <div className="text-center text-[10px] text-gray-400">Compliance Rate</div>
+                <div className="text-center text-[10px] text-gray-600">Compliance Rate</div>
               </div>
             ) : <Empty />}
           </ChartCard>
@@ -106,8 +106,8 @@ export default function DashboardPage() {
             {slaCompliance ? (
               <div className="text-center space-y-3">
                 <div className="text-4xl font-bold text-status-success">{slaCompliance.complianceRate}%</div>
-                <div className="text-xs text-gray-500">On Time: {slaCompliance.onTime} · Breached: {slaCompliance.breached}</div>
-                <div className="text-[10px] text-gray-400">Closed tickets: {slaCompliance.total}</div>
+                <div className="text-xs text-gray-700">On Time: {slaCompliance.onTime} · Breached: {slaCompliance.breached}</div>
+                <div className="text-[10px] text-gray-600">Closed tickets: {slaCompliance.total}</div>
               </div>
             ) : <Empty />}
           </ChartCard>
@@ -118,7 +118,7 @@ export default function DashboardPage() {
                 <ProgressBar label="Lead → Quote" value={salesKpis.leadToQuote} max={100} color="bg-blue-500" />
                 <ProgressBar label="Quote → SO" value={salesKpis.quoteToSo} max={100} color="bg-indigo-500" />
                 <ProgressBar label="Win Rate" value={salesKpis.winRate} max={100} color="bg-status-success" />
-                <div className="text-xs text-gray-400 mt-2">
+                <div className="text-xs text-gray-600 mt-2">
                   Leads: {salesKpis.totalLeads} · Quotes: {salesKpis.totalQuotes} · SOs: {salesKpis.totalSO}
                 </div>
               </div>
@@ -135,7 +135,7 @@ function KpiCard({ icon, label, value, color }: { icon: string; label: string; v
     <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-3 sm:p-4">
       <div className="flex items-center gap-2 mb-1">
         <span className={`material-symbols-outlined !text-[18px] ${color}`}>{icon}</span>
-        <span className="text-[10px] sm:text-xs text-gray-500">{label}</span>
+        <span className="text-[10px] sm:text-xs text-gray-700">{label}</span>
       </div>
       <div className={`text-xl sm:text-2xl font-bold ${color}`}>{value}</div>
     </div>
@@ -167,5 +167,5 @@ function ProgressBar({ label, value, max, color }: { label: string; value: numbe
 }
 
 function Empty() {
-  return <div className="text-center py-8 text-gray-400 text-sm">No data yet</div>;
+  return <div className="text-center py-8 text-gray-600 text-sm">No data yet</div>;
 }

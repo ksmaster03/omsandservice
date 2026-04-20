@@ -26,5 +26,14 @@ export const customerCreateTicketSchema = z.object({
   priority: z.enum(['URGENT', 'NORMAL', 'LOW']),
   description: z.string().min(5).max(2000),
   locationDetail: z.string().max(500).optional(),
+  photoKeys: z
+    .array(
+      z.object({
+        s3Key: z.string().max(500),
+        size: z.number().int().nonnegative().max(20 * 1024 * 1024),
+      }),
+    )
+    .max(5)
+    .default([]),
 });
 export type CustomerCreateTicketInput = z.infer<typeof customerCreateTicketSchema>;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
@@ -48,6 +48,16 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileDropdown, setProfileDropdown] = useState(false);
+
+  // Close profile dropdown on ESC
+  useEffect(() => {
+    if (!profileDropdown) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setProfileDropdown(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [profileDropdown]);
   const [profileForm, setProfileForm] = useState({
     name: user?.name ?? '',
     phone: '',
@@ -113,7 +123,7 @@ export default function Layout() {
           </div>
           <div>
             <div className="font-display font-black text-sm text-gray-900">TOPTIER</div>
-            <div className="text-[9px] text-gray-400 uppercase tracking-wider">Order & Service Mgmt</div>
+            <div className="text-[9px] text-gray-600 uppercase tracking-wider">Order & Service Mgmt</div>
           </div>
         </div>
       </div>
@@ -121,7 +131,7 @@ export default function Layout() {
       <nav className="flex-1 overflow-y-auto py-2">
         {Object.entries(groupedNav).map(([section, items]) => (
           <div key={section} className="mb-1">
-            <div className="px-4 py-2 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+            <div className="px-4 py-2 text-[9px] font-bold text-gray-600 uppercase tracking-widest">
               {section}
             </div>
             {items.map((item) => (
@@ -148,7 +158,7 @@ export default function Layout() {
         ))}
       </nav>
 
-      <div className="border-t border-gray-200 p-3 text-[10px] text-gray-400">
+      <div className="border-t border-gray-200 p-3 text-[10px] text-gray-600">
         Toptier OSM
       </div>
     </>
@@ -206,40 +216,48 @@ export default function Layout() {
             <LanguageSwitcher />
             <div className="relative">
             <button
+              type="button"
               onClick={() => setProfileDropdown((v) => !v)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-brand hover:bg-gray-100 transition"
+              aria-haspopup="menu"
+              aria-expanded={profileDropdown}
+              aria-label={`Profile menu ${user?.name ?? ''}`}
+              className="flex items-center gap-2 px-2 py-1.5 min-h-[40px] rounded-brand hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-brand-red/40"
             >
               <div className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-xs">
                 {user?.name?.[0] ?? '?'}
               </div>
               <div className="hidden sm:block text-left">
                 <div className="text-xs font-semibold text-gray-900">{user?.name}</div>
-                <div className="text-[10px] text-gray-500">{user?.role}</div>
+                <div className="text-[10px] text-gray-600">{user?.role}</div>
               </div>
-              <span className="material-symbols-outlined !text-[16px] text-gray-400">expand_more</span>
+              <span className="material-symbols-outlined !text-[16px] text-gray-600" aria-hidden="true">expand_more</span>
             </button>
 
             {/* Dropdown */}
             {profileDropdown && (
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setProfileDropdown(false)} />
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-brand-lg shadow-brand-lg border border-gray-200 z-40 py-1">
+                <div role="menu" aria-label="Profile menu" className="absolute right-0 top-full mt-1 w-48 bg-white rounded-brand-lg shadow-brand-lg border border-gray-200 z-40 py-1">
                   <button
+                    type="button"
+                    role="menuitem"
                     onClick={openProfileEdit}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                   >
-                    <span className="material-symbols-outlined !text-[16px]">edit</span>
+                    <span className="material-symbols-outlined !text-[16px]" aria-hidden="true">edit</span>
                     {t('common.edit')} Profile
                   </button>
                   <button
+                    type="button"
+                    role="menuitem"
                     onClick={() => {
                       setProfileDropdown(false);
                       logout();
                       navigate('/login');
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-brand-red hover:bg-gray-50"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-brand-red hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                   >
-                    <span className="material-symbols-outlined !text-[16px]">logout</span>
+                    <span className="material-symbols-outlined !text-[16px]" aria-hidden="true">logout</span>
                     {t('auth.logout')}
                   </button>
                 </div>
@@ -273,7 +291,7 @@ export default function Layout() {
           </>
         }
       >
-        <div className="text-xs text-gray-500 mb-3 bg-gray-50 rounded-brand p-2">
+        <div className="text-xs text-gray-700 mb-3 bg-gray-50 rounded-brand p-2">
           {user?.email} · {user?.role}
         </div>
         <Input

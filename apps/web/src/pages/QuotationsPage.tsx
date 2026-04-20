@@ -30,7 +30,7 @@ const STATUS_COLOR: Record<QuoteStatus, string> = {
   SENT: 'bg-status-info-light text-status-info',
   ACCEPTED: 'bg-status-success-light text-status-success',
   REJECTED: 'bg-brand-red-light text-brand-red',
-  EXPIRED: 'bg-gray-200 text-gray-500',
+  EXPIRED: 'bg-gray-200 text-gray-700',
 };
 
 function round2(n: number) {
@@ -144,7 +144,7 @@ export default function QuotationsPage() {
           <button
             onClick={() => setStatusFilter('')}
             className={`px-3 py-1 rounded text-xs font-semibold ${
-              !statusFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'
+              !statusFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'
             }`}
           >
             ทั้งหมด
@@ -154,7 +154,7 @@ export default function QuotationsPage() {
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-1 rounded text-xs font-semibold ${
-                statusFilter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'
+                statusFilter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'
               }`}
             >
               {STATUS_LABEL[s]}
@@ -164,25 +164,25 @@ export default function QuotationsPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">เลขที่</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ลูกค้า</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">มูลค่า</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">สถานะ</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">หมดอายุ</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">การทำงาน</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">เลขที่</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ลูกค้า</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">มูลค่า</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">สถานะ</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">หมดอายุ</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">การทำงาน</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">กำลังโหลด...</td>
+                  <td colSpan={6} className="text-center py-8 text-gray-600">กำลังโหลด...</td>
                 </tr>
               )}
               {!isLoading && data?.items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">ยังไม่มีใบเสนอราคา</td>
+                  <td colSpan={6} className="text-center py-8 text-gray-600">ยังไม่มีใบเสนอราคา</td>
                 </tr>
               )}
               {data?.items.map((q: Quotation) => (
@@ -395,11 +395,11 @@ export default function QuotationsPage() {
 
         <div className="bg-gray-50 rounded-brand p-3 text-xs space-y-1">
           <div className="flex justify-between">
-            <span className="text-gray-500">ยอดรวม</span>
+            <span className="text-gray-700">ยอดรวม</span>
             <span className="font-mono">฿{totals.subtotal.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">VAT {vatRate}%</span>
+            <span className="text-gray-700">VAT {vatRate}%</span>
             <span className="font-mono">฿{totals.vat.toLocaleString()}</span>
           </div>
           <div className="flex justify-between pt-1 border-t border-gray-200 font-bold text-sm text-brand-navy">

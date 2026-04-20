@@ -184,7 +184,7 @@ export default function DemosPage() {
               <div
                 key={d}
                 className={`text-center text-[10px] font-bold py-2 uppercase tracking-wider ${
-                  i === 0 || i === 6 ? 'text-brand-red' : 'text-gray-500'
+                  i === 0 || i === 6 ? 'text-brand-red' : 'text-gray-700'
                 }`}
               >
                 {d}
@@ -194,7 +194,7 @@ export default function DemosPage() {
 
           <div className="grid grid-cols-7">
             {isLoading && (
-              <div className="col-span-7 text-center py-8 text-gray-400">กำลังโหลด...</div>
+              <div className="col-span-7 text-center py-8 text-gray-600">กำลังโหลด...</div>
             )}
             {!isLoading &&
               grid.map((cell, i) => {
@@ -226,7 +226,7 @@ export default function DemosPage() {
                         </div>
                       ))}
                       {items.length > 3 && (
-                        <div className="text-[9px] text-gray-500">+{items.length - 3} อีก</div>
+                        <div className="text-[9px] text-gray-700">+{items.length - 3} อีก</div>
                       )}
                     </div>
                   </button>
@@ -243,7 +243,7 @@ export default function DemosPage() {
                 ? selectedDay.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long' })
                 : 'เลือกวัน'}
             </div>
-            <div className="text-xs text-gray-500 mt-0.5">
+            <div className="text-xs text-gray-700 mt-0.5">
               {selectedDemos.length > 0
                 ? `${selectedDemos.length} นัดหมาย`
                 : 'ไม่มีนัดหมาย'}
@@ -251,12 +251,12 @@ export default function DemosPage() {
           </div>
           <div className="p-3 space-y-2 max-h-[520px] overflow-y-auto">
             {!selectedDay && (
-              <div className="text-xs text-gray-400 text-center py-8">
+              <div className="text-xs text-gray-600 text-center py-8">
                 คลิกวันบนปฏิทินเพื่อดูรายละเอียด
               </div>
             )}
             {selectedDay && selectedDemos.length === 0 && (
-              <div className="text-xs text-gray-400 text-center py-8">ไม่มีนัดหมายในวันนี้</div>
+              <div className="text-xs text-gray-600 text-center py-8">ไม่มีนัดหมายในวันนี้</div>
             )}
             {selectedDemos.map((d) => (
               <div key={d.id} className="border border-gray-200 rounded-brand p-3">
@@ -272,16 +272,16 @@ export default function DemosPage() {
                 <div className="text-xs text-gray-600">{d.product.name}</div>
                 {d.location && (
                   <div className="text-[11px] text-gray-700 mt-1 flex items-center gap-1">
-                    <span className="material-symbols-outlined !text-[13px] text-gray-400">location_on</span>
+                    <span className="material-symbols-outlined !text-[13px] text-gray-600">location_on</span>
                     {d.location}
                   </div>
                 )}
                 {d.address && (
-                  <div className="text-[10px] text-gray-500 ml-4">{d.address}</div>
+                  <div className="text-[10px] text-gray-700 ml-4">{d.address}</div>
                 )}
                 {(d.contactName || d.contactPhone || d.lead.customer.phone) && (
                   <div className="text-[11px] text-gray-600 mt-1 flex items-center gap-1">
-                    <span className="material-symbols-outlined !text-[13px] text-gray-400">person</span>
+                    <span className="material-symbols-outlined !text-[13px] text-gray-600">person</span>
                     {d.contactName ?? d.lead.customer.name}
                     {(d.contactPhone ?? d.lead.customer.phone) && (
                       <a href={`tel:${d.contactPhone ?? d.lead.customer.phone}`} className="text-brand-red font-mono ml-1">
@@ -290,7 +290,7 @@ export default function DemosPage() {
                     )}
                   </div>
                 )}
-                {d.note && <div className="text-[11px] text-gray-500 mt-1 bg-gray-50 rounded p-1.5">{d.note}</div>}
+                {d.note && <div className="text-[11px] text-gray-700 mt-1 bg-gray-50 rounded p-1.5">{d.note}</div>}
               </div>
             ))}
           </div>
@@ -354,7 +354,7 @@ export default function DemosPage() {
           required
         />
         <div className="border-t border-gray-200 pt-3 mt-1">
-          <div className="text-[10px] text-gray-400 mb-2 font-semibold uppercase">สถานที่ + ข้อมูลติดต่อ</div>
+          <div className="text-[10px] text-gray-600 mb-2 font-semibold uppercase">สถานที่ + ข้อมูลติดต่อ</div>
           <Input
             id="demo-loc"
             label="สถานที่ Demo"

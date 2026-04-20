@@ -13,7 +13,7 @@ const STATUS_COLOR: Record<PmScheduleItem['status'], string> = {
   SCHEDULED: 'bg-status-info-light text-status-info',
   COMPLETED: 'bg-status-success-light text-status-success',
   OVERDUE: 'bg-brand-red-light text-brand-red',
-  SKIPPED: 'bg-gray-200 text-gray-500',
+  SKIPPED: 'bg-gray-200 text-gray-700',
 };
 
 const STATUS_LABEL: Record<PmScheduleItem['status'], string> = {
@@ -89,13 +89,13 @@ export default function PmSchedulePage() {
         <div className="mb-4 flex gap-1 bg-gray-100 rounded-brand p-1 w-fit">
           <button
             onClick={() => setShowUpcoming(true)}
-            className={`px-3 py-1 rounded text-xs font-semibold ${showUpcoming ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+            className={`px-3 py-1 rounded text-xs font-semibold ${showUpcoming ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
           >
             ถึงกำหนดใน 30 วัน
           </button>
           <button
             onClick={() => setShowUpcoming(false)}
-            className={`px-3 py-1 rounded text-xs font-semibold ${!showUpcoming ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+            className={`px-3 py-1 rounded text-xs font-semibold ${!showUpcoming ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
           >
             ทั้งหมด
           </button>
@@ -103,24 +103,24 @@ export default function PmSchedulePage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">กำหนด</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ลูกค้า / เครื่อง</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ช่าง</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">สถานะ</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">กำหนด</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ลูกค้า / เครื่อง</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ช่าง</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">สถานะ</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700"></th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">กำลังโหลด...</td>
+                  <td colSpan={5} className="text-center py-8 text-gray-600">กำลังโหลด...</td>
                 </tr>
               )}
               {!isLoading && data?.items.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">ไม่มีงาน PM ในช่วงนี้</td>
+                  <td colSpan={5} className="text-center py-8 text-gray-600">ไม่มีงาน PM ในช่วงนี้</td>
                 </tr>
               )}
               {data?.items.map((pm: PmScheduleItem) => {
@@ -134,13 +134,13 @@ export default function PmSchedulePage() {
                       <div className="text-xs font-semibold text-gray-900">
                         {new Date(pm.scheduledAt).toLocaleDateString('th-TH')}
                       </div>
-                      <div className={`text-[10px] ${isOverdue ? 'text-brand-red font-bold' : 'text-gray-500'}`}>
+                      <div className={`text-[10px] ${isOverdue ? 'text-brand-red font-bold' : 'text-gray-700'}`}>
                         {daysLeft >= 0 ? `อีก ${daysLeft} วัน` : `เลย ${Math.abs(daysLeft)} วัน`}
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm font-semibold text-gray-900">{pm.asset.customer.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-700">
                         {pm.asset.product.name} · <span className="font-mono">{pm.asset.serialNo}</span>
                       </div>
                     </td>
@@ -201,7 +201,7 @@ export default function PmSchedulePage() {
       >
         {completeModal && (
           <>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-gray-700 mb-3">
               ปิดงาน PM ของ <strong>{completeModal.asset.customer.name}</strong> · {completeModal.asset.product.name}
               <br />ระบบจะสร้าง PM รอบถัดไปอัตโนมัติ ({completeModal.asset.product.pmIntervalMonths} เดือนจากวันนี้)
             </p>

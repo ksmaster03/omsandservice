@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import EquipmentPage from './pages/EquipmentPage';
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <FeedbackButton source="customer" />
+        <Toaster position="top-center" richColors closeButton duration={4000} />
       </BrowserRouter>
     </QueryClientProvider>
   );

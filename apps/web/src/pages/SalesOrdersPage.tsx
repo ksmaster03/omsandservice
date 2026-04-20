@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import TableSkeleton from '../components/TableSkeleton';
+import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import {
@@ -28,7 +30,7 @@ const STATUS_COLOR: Record<SOStatus, string> = {
 };
 
 const MS_COLOR: Record<PaymentMilestone['status'], string> = {
-  PENDING: 'bg-gray-100 text-gray-500',
+  PENDING: 'bg-gray-100 text-gray-700',
   DUE: 'bg-status-warning-light text-brand-gold-text',
   PAID: 'bg-status-success-light text-status-success',
   OVERDUE: 'bg-brand-red-light text-brand-red',
@@ -101,25 +103,21 @@ export default function SalesOrdersPage() {
       <div className="p-6">
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colNo')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.customer')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colAmount')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colStatus')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colPayments')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('so.colNo')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('common.customer')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('so.colAmount')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('so.colStatus')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('so.colPayments')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700"></th>
               </tr>
             </thead>
             <tbody>
-              {isLoading && (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">{t('common.loading')}</td>
-                </tr>
-              )}
+              {isLoading && <TableSkeleton rows={8} columns={6} />}
               {!isLoading && list?.items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">{t('so.empty')}</td>
+                  <td colSpan={6} className="text-center py-8 text-gray-600">{t('so.empty')}</td>
                 </tr>
               )}
               {list?.items.map((so: SalesOrder) => (
@@ -153,7 +151,7 @@ export default function SalesOrdersPage() {
         onClose={() => setSelectedId(null)}
         title={detail.data?.soNo ?? t('so.title')}
       >
-        {detail.isLoading && <div className="text-gray-400 text-sm py-4">{t('common.loading')}</div>}
+        {detail.isLoading && <div className="text-gray-600 text-sm py-4">{t('common.loading')}</div>}
         {detail.data && (
           <div className="space-y-4">
             <div className="text-xs text-gray-600">
@@ -206,7 +204,7 @@ export default function SalesOrdersPage() {
                   >
                     <div>
                       <div className="text-xs font-semibold text-gray-900">{m.label}</div>
-                      <div className="text-[10px] text-gray-500">
+                      <div className="text-[10px] text-gray-700">
                         {t('so.dueDate')} {new Date(m.dueDate).toLocaleDateString('th-TH')}
                         {m.paidAt && ` · ${t('so.paidOn')} ${new Date(m.paidAt).toLocaleDateString('th-TH')}`}
                       </div>
@@ -238,12 +236,12 @@ export default function SalesOrdersPage() {
         onClose={() => setOpenConvert(false)}
         title={t('so.convertModalTitle')}
       >
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-700 mb-3">
           {t('so.convertHelp')}
         </p>
-        {acceptedQuotes.isLoading && <div className="text-gray-400 text-sm">{t('common.loading')}</div>}
+        {acceptedQuotes.isLoading && <div className="text-gray-600 text-sm">{t('common.loading')}</div>}
         {acceptedQuotes.data?.items.length === 0 && (
-          <div className="text-center py-6 text-gray-400 text-xs">
+          <div className="text-center py-6 text-gray-600 text-xs">
             {t('so.noAccepted')}
           </div>
         )}
@@ -254,7 +252,7 @@ export default function SalesOrdersPage() {
                 <div>
                   <div className="font-mono text-xs font-bold text-brand-navy">{q.quoteNo}</div>
                   <div className="text-sm font-semibold">{q.customer.name}</div>
-                  <div className="text-xs text-gray-500">฿{Number(q.total).toLocaleString()}</div>
+                  <div className="text-xs text-gray-700">฿{Number(q.total).toLocaleString()}</div>
                 </div>
               </div>
               <div className="flex gap-1.5">

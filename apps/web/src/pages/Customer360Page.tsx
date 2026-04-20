@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import Spinner from '../components/Spinner';
 import Button from '../components/Button';
 import api from '../lib/api';
 
@@ -75,8 +76,8 @@ export default function Customer360Page() {
     enabled: !!id,
   });
 
-  if (isLoading) return <div className="p-8 text-center text-gray-400">{t('common.loading')}</div>;
-  if (!data) return <div className="p-8 text-center text-gray-400">{t('common.notFound')}</div>;
+  if (isLoading) return <div className="p-8 text-center text-gray-600">{t('common.loading')}</div>;
+  if (!data) return <div className="p-8 text-center text-gray-600">{t('common.notFound')}</div>;
 
   const { customer, summary, timeline, assets } = data;
 
@@ -104,7 +105,7 @@ export default function Customer360Page() {
               </div>
               <div>
                 <div className="font-semibold text-gray-900">{customer.name}</div>
-                <div className="text-xs text-gray-500">{customer.type} {customer.wmsCode ? `· WMS: ${customer.wmsCode}` : ''}</div>
+                <div className="text-xs text-gray-700">{customer.type} {customer.wmsCode ? `· WMS: ${customer.wmsCode}` : ''}</div>
               </div>
             </div>
             <div className="space-y-1 text-xs text-gray-600">
@@ -128,7 +129,7 @@ export default function Customer360Page() {
               Activity Timeline
             </h3>
             <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {timeline.length === 0 && <div className="text-center py-8 text-gray-400 text-sm">ยังไม่มี activity</div>}
+              {timeline.length === 0 && <div className="text-center py-8 text-gray-600 text-sm">ยังไม่มี activity</div>}
               {timeline.map((item, i) => (
                 <div key={`${item.type}-${item.id}-${i}`} className="flex gap-3">
                   <div className="flex flex-col items-center">
@@ -140,17 +141,17 @@ export default function Customer360Page() {
                   <div className="flex-1 pb-3">
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-semibold text-gray-900">{item.title}</div>
-                      <div className="text-[10px] text-gray-400 font-mono">
+                      <div className="text-[10px] text-gray-600 font-mono">
                         {new Date(item.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-gray-500">{TYPE_LABEL[item.type]}</span>
+                      <span className="text-[10px] text-gray-700">{TYPE_LABEL[item.type]}</span>
                       {item.status && (
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{item.status}</span>
                       )}
                     </div>
-                    {item.detail && <div className="text-[11px] text-gray-500 mt-0.5">{item.detail}</div>}
+                    {item.detail && <div className="text-[11px] text-gray-700 mt-0.5">{item.detail}</div>}
                   </div>
                 </div>
               ))}
@@ -170,7 +171,7 @@ export default function Customer360Page() {
                 return (
                   <div key={a.id} className="border border-gray-200 rounded-brand p-2.5">
                     <div className="text-xs font-semibold text-gray-900">{a.product.name}</div>
-                    <div className="text-[10px] text-gray-500 font-mono">{a.serialNo} · {a.product.brand}</div>
+                    <div className="text-[10px] text-gray-700 font-mono">{a.serialNo} · {a.product.brand}</div>
                     <div className={`text-[10px] font-semibold mt-1 ${warColor}`}>
                       {daysLeft > 0 ? `ประกันเหลือ ${daysLeft} วัน` : 'หมดประกัน'}
                     </div>
@@ -190,10 +191,10 @@ function StatCard({ icon, label, value, sub, color }: { icon: string; label: str
     <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-4">
       <div className="flex items-center gap-2 mb-2">
         <span className={`material-symbols-outlined !text-[20px] ${color}`}>{icon}</span>
-        <span className="text-xs text-gray-500">{label}</span>
+        <span className="text-xs text-gray-700">{label}</span>
       </div>
       <div className={`text-2xl font-bold ${color}`}>{value}</div>
-      <div className="text-[10px] text-gray-400 mt-1">{sub}</div>
+      <div className="text-[10px] text-gray-600 mt-1">{sub}</div>
     </div>
   );
 }

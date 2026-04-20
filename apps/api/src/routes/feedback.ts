@@ -1,10 +1,22 @@
+import { randomUUID } from 'node:crypto';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
+import { saveUpload, isAllowedFeedback } from '../lib/storage';
 
 const TYPES = ['BUG', 'FEATURE', 'IMPROVEMENT', 'QUESTION', 'OTHER'] as const;
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'WONT_FIX'] as const;
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
+
+const MAX_ATTACHMENTS_PER_FEEDBACK = 3;
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024; // 5 MB
+
+const attachmentSchema = z.object({
+  url: z.string().max(500),
+  name: z.string().max(200),
+  size: z.number().int().nonnegative().max(MAX_ATTACHMENT_SIZE),
+  contentType: z.string().max(100),
+});
 
 const createSchema = z.object({
   type: z.enum(TYPES),
@@ -12,6 +24,7 @@ const createSchema = z.object({
   description: z.string().min(5).max(5000),
   priority: z.enum(PRIORITIES).optional(),
   screenshot: z.string().max(500).optional(),
+  attachments: z.array(attachmentSchema).max(MAX_ATTACHMENTS_PER_FEEDBACK).optional(),
   source: z.string().max(20).optional(),
   submitterName: z.string().max(100).optional(),
   submitterEmail: z.string().email().optional(),
@@ -56,6 +69,7 @@ const feedbackRoutes: FastifyPluginAsync = async (app) => {
         description: parsed.data.description,
         priority: parsed.data.priority ?? 'MEDIUM',
         screenshot: parsed.data.screenshot,
+        attachments: parsed.data.attachments ?? undefined,
         source: parsed.data.source ?? 'admin',
         submittedBy,
         submitterName,
@@ -63,6 +77,30 @@ const feedbackRoutes: FastifyPluginAsync = async (app) => {
       },
     });
     return reply.code(201).send({ ok: true, data: feedback });
+  });
+
+  // ─── POST /feedback/upload ─── public, one file per call
+  app.post('/upload', async (req, reply) => {
+    const part = await req.file({ limits: { fileSize: MAX_ATTACHMENT_SIZE } });
+    if (!part) {
+      return reply.code(400).send({ ok: false, error: { code: 'NO_FILE', message: 'No file uploaded' } });
+    }
+    if (!isAllowedFeedback(part.mimetype)) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: 'INVALID_TYPE', message: `Unsupported file type: ${part.mimetype}` },
+      });
+    }
+    const stored = await saveUpload('feedback', randomUUID(), part);
+    return reply.code(201).send({
+      ok: true,
+      data: {
+        url: stored.url,
+        name: part.filename,
+        size: stored.size,
+        contentType: stored.mime,
+      },
+    });
   });
 
   // ─── Below routes require staff auth ───

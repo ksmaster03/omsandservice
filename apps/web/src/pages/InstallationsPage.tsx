@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import TableSkeleton from '../components/TableSkeleton';
+import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
@@ -24,7 +26,7 @@ const STATUS_COLOR: Record<Installation['status'], string> = {
   SCHEDULED: 'bg-status-info-light text-status-info',
   IN_PROGRESS: 'bg-status-warning-light text-brand-gold-text',
   COMPLETED: 'bg-status-success-light text-status-success',
-  CANCELLED: 'bg-gray-200 text-gray-500',
+  CANCELLED: 'bg-gray-200 text-gray-700',
 };
 
 export default function InstallationsPage() {
@@ -176,25 +178,21 @@ export default function InstallationsPage() {
       <div className="p-4 sm:p-6">
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('installations.colSo')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('installations.colCustomer')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('installations.colScheduled')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('installations.colTech')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('installations.colStatus')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('installations.colSo')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('installations.colCustomer')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('installations.colScheduled')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('installations.colTech')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('installations.colStatus')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700"></th>
               </tr>
             </thead>
             <tbody>
-              {list.isLoading && (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">{t('common.loading')}</td>
-                </tr>
-              )}
+              {list.isLoading && <TableSkeleton rows={8} columns={6} />}
               {!list.isLoading && list.data?.items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400" dangerouslySetInnerHTML={{ __html: t('installations.empty') }} />
+                  <td colSpan={6} className="text-center py-8 text-gray-600" dangerouslySetInnerHTML={{ __html: t('installations.empty') }} />
                 </tr>
               )}
               {list.data?.items.map((inst: Installation) => (
@@ -211,7 +209,7 @@ export default function InstallationsPage() {
                     })}
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-700">
-                    {inst.tech ? inst.tech.name : <span className="text-gray-400">{t('installations.notAssigned')}</span>}
+                    {inst.tech ? inst.tech.name : <span className="text-gray-600">{t('installations.notAssigned')}</span>}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLOR[inst.status]}`}>
@@ -254,7 +252,7 @@ export default function InstallationsPage() {
           )
         }
       >
-        {detail.isLoading && <div className="text-gray-400 text-sm py-4">{t('common.loading')}</div>}
+        {detail.isLoading && <div className="text-gray-600 text-sm py-4">{t('common.loading')}</div>}
         {detail.data && (
           <div className="space-y-4">
             <div className="text-xs text-gray-600">
@@ -291,7 +289,7 @@ export default function InstallationsPage() {
                   </Button>
                 </div>
                 {detail.data.tech && (
-                  <div className="text-[11px] text-gray-500 mt-1">
+                  <div className="text-[11px] text-gray-700 mt-1">
                     {t('installations.currentTech')}: {detail.data.tech.name}
                   </div>
                 )}
@@ -308,7 +306,7 @@ export default function InstallationsPage() {
                     <div key={it.id} className="flex items-center gap-2">
                       <div className="flex-1 text-xs">
                         <div className="font-semibold text-gray-900">{it.product.name}</div>
-                        <div className="text-gray-500 font-mono text-[10px]">{it.product.sku}</div>
+                        <div className="text-gray-700 font-mono text-[10px]">{it.product.sku}</div>
                       </div>
                       <input
                         type="text"
@@ -381,7 +379,7 @@ export default function InstallationsPage() {
             </select>
             {candidateSOs.data &&
               candidateSOs.data.items.filter((so: SalesOrder) => !so.installation && so.status !== 'CANCELLED').length === 0 && (
-                <div className="text-[11px] text-gray-500 mt-1">
+                <div className="text-[11px] text-gray-700 mt-1">
                   {t('installations.noSoAvailable')}
                 </div>
               )}

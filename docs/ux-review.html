@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NBA OMS — Professional UX/UI Review</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  body { font-family: 'Inter', 'Noto Sans Thai', system-ui, sans-serif; }
+  code, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.875em; }
+  .thai { font-family: 'Noto Sans Thai', 'Inter', sans-serif; }
+  .gradtext { background: linear-gradient(92deg,#a5b4fc 0%,#f0abfc 50%,#fca5a5 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(8px); }
+  .card:hover { border-color: rgba(165,180,252,.2); }
+  .issue-card { border-left: 3px solid transparent; transition: border-color .15s; }
+  .issue-h { border-left-color: #f87171; }
+  .issue-m { border-left-color: #fbbf24; }
+  .issue-l { border-left-color: #60a5fa; }
+  .sev-h { background: rgba(248,113,113,.12); color: #fca5a5; border: 1px solid rgba(248,113,113,.3); }
+  .sev-m { background: rgba(251,191,36,.12); color: #fcd34d; border: 1px solid rgba(251,191,36,.3); }
+  .sev-l { background: rgba(96,165,250,.12); color: #93c5fd; border: 1px solid rgba(96,165,250,.3); }
+  .tag { padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .02em; display: inline-block; }
+  .chip { padding: 3px 10px; border-radius: 6px; font-size: 12px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); color: #cbd5e1; }
+  .toc a { color: #94a3b8; transition: color .15s; }
+  .toc a:hover { color: #a5b4fc; }
+  table.neat { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.neat th, table.neat td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.05); }
+  table.neat th { background: rgba(255,255,255,.03); font-weight: 600; color: #cbd5e1; }
+  table.neat td code { color: #a5b4fc; }
+  .print\:block { display: none; }
+  @media print {
+    body { background: white !important; color: #0f172a !important; }
+    .no-print { display: none !important; }
+    .card, section { background: white !important; border-color: #e5e7eb !important; color: #0f172a !important; }
+    .gradtext { color: #4338ca !important; -webkit-text-fill-color: #4338ca !important; }
+    h1, h2, h3, h4 { color: #0f172a !important; }
+  }
+  .grain::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:-1; opacity:.035; background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"); }
+  details > summary { cursor: pointer; list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .chevron { transform: rotate(90deg); }
+  .chevron { transition: transform .15s; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 grain relative">
+
+<div class="pointer-events-none fixed inset-0 -z-10">
+  <div class="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-indigo-600/15 blur-3xl"></div>
+  <div class="absolute top-1/3 -right-32 w-[400px] h-[400px] rounded-full bg-fuchsia-600/10 blur-3xl"></div>
+</div>
+
+<!-- ═══════════ STICKY NAV ═══════════ -->
+<nav class="sticky top-0 z-40 backdrop-blur-md bg-slate-950/70 border-b border-white/5 no-print">
+  <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 grid place-items-center">
+        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <span class="text-sm font-semibold">NBA OMS · UX Review</span>
+    </div>
+    <div class="hidden md:flex gap-4 text-xs text-slate-400">
+      <a href="#summary" class="hover:text-white transition">Summary</a>
+      <a href="#stats" class="hover:text-white transition">Stats</a>
+      <a href="#admin" class="hover:text-white transition">Admin</a>
+      <a href="#customer" class="hover:text-white transition">Customer</a>
+      <a href="#tech" class="hover:text-white transition">Tech</a>
+      <a href="#doa" class="hover:text-white transition">DOA Ref</a>
+      <a href="#notion" class="hover:text-white transition">Notion</a>
+      <a href="#roadmap" class="hover:text-white transition">Roadmap</a>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-6xl mx-auto px-6 py-10">
+
+<!-- ═══════════ HERO ═══════════ -->
+<header class="mb-20">
+  <div class="flex items-center gap-2 text-xs text-slate-400 mb-4">
+    <span class="tag bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">CONFIDENTIAL</span>
+    <span class="chip">Prepared 2026-04-17</span>
+    <span class="chip">Scope: 4 apps</span>
+  </div>
+  <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-5 leading-tight">
+    <span class="gradtext">NBA Sport OMS</span>
+    <span class="block text-slate-300 text-3xl md:text-4xl font-bold mt-2">Professional UX / UI Review</span>
+  </h1>
+  <p class="thai text-lg text-slate-300 max-w-3xl leading-relaxed">
+    รีวิวเชิงลึกแบบมืออาชีพของระบบ NBA Sport OMS ทั้ง 4 ส่วน — Admin Console,
+    Customer PWA, Technician PWA และ Services Portal — โดยใช้ heuristic evaluation,
+    accessibility audit, component consistency check เทียบกับ DOA Lease System
+    (Toptier house style) และ benchmark กับ Notion เป็น reference ของ modern SaaS.
+  </p>
+  <div class="mt-6 flex flex-wrap gap-2">
+    <span class="chip">Nielsen 10</span>
+    <span class="chip">WCAG 2.1 AA</span>
+    <span class="chip">Mobile Touch Targets</span>
+    <span class="chip">Field Context</span>
+    <span class="chip">i18n TH/EN</span>
+    <span class="chip">PWA Readiness</span>
+  </div>
+</header>
+
+<!-- ═══════════ EXECUTIVE SUMMARY ═══════════ -->
+<section id="summary" class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 1</span>
+    <h2 class="text-3xl font-bold">Executive Summary</h2>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-4 mb-6">
+    <div class="card rounded-2xl p-5">
+      <div class="text-xs text-emerald-400 font-semibold uppercase tracking-wider mb-2">Strengths</div>
+      <ul class="text-sm space-y-2 text-slate-300">
+        <li class="flex gap-2"><span class="text-emerald-400">✓</span> Clean monorepo, shared tailwind preset</li>
+        <li class="flex gap-2"><span class="text-emerald-400">✓</span> Full TH/EN i18n (330 keys, &gt;99% parity)</li>
+        <li class="flex gap-2"><span class="text-emerald-400">✓</span> Role-based UI filtering baked in</li>
+        <li class="flex gap-2"><span class="text-emerald-400">✓</span> Optimistic updates on kanban</li>
+        <li class="flex gap-2"><span class="text-emerald-400">✓</span> 6-stage tech workflow with auto GPS</li>
+      </ul>
+    </div>
+    <div class="card rounded-2xl p-5" style="border-color:rgba(251,191,36,.25)">
+      <div class="text-xs text-amber-400 font-semibold uppercase tracking-wider mb-2">Critical Gaps</div>
+      <ul class="text-sm space-y-2 text-slate-300">
+        <li class="flex gap-2"><span class="text-amber-400">!</span> No skeleton loaders — blank screens on slow net</li>
+        <li class="flex gap-2"><span class="text-amber-400">!</span> Destructive actions 1-click, no confirm</li>
+        <li class="flex gap-2"><span class="text-amber-400">!</span> Touch targets 40px — fails glove/mobile UX</li>
+        <li class="flex gap-2"><span class="text-amber-400">!</span> No offline queue on tech app</li>
+        <li class="flex gap-2"><span class="text-amber-400">!</span> OTP flow missing auto-advance + resend timer</li>
+      </ul>
+    </div>
+    <div class="card rounded-2xl p-5" style="border-color:rgba(248,113,113,.25)">
+      <div class="text-xs text-rose-400 font-semibold uppercase tracking-wider mb-2">Must-Fix Before Pilot</div>
+      <ul class="text-sm space-y-2 text-slate-300">
+        <li class="flex gap-2"><span class="text-rose-400">×</span> Icon-only buttons lack <code>aria-label</code></li>
+        <li class="flex gap-2"><span class="text-rose-400">×</span> <code>text-gray-400/500</code> on white fails WCAG AA</li>
+        <li class="flex gap-2"><span class="text-rose-400">×</span> Drag failures silently revert (no toast)</li>
+        <li class="flex gap-2"><span class="text-rose-400">×</span> Dashboard has no error fallback</li>
+        <li class="flex gap-2"><span class="text-rose-400">×</span> Tech app: no error boundary (kills mid-repair)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card rounded-2xl p-6">
+    <h3 class="font-semibold mb-3 flex items-center gap-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+      Overall Readiness
+    </h3>
+    <div class="grid md:grid-cols-4 gap-4 text-sm">
+      <div>
+        <div class="flex items-baseline justify-between mb-1">
+          <span class="text-slate-400">Admin Web</span>
+          <span class="mono text-emerald-400">B+</span>
+        </div>
+        <div class="h-1.5 rounded-full bg-white/5 overflow-hidden">
+          <div class="h-full bg-emerald-500" style="width:82%"></div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Strong bones, needs polish</div>
+      </div>
+      <div>
+        <div class="flex items-baseline justify-between mb-1">
+          <span class="text-slate-400">Customer PWA</span>
+          <span class="mono text-amber-400">B−</span>
+        </div>
+        <div class="h-1.5 rounded-full bg-white/5 overflow-hidden">
+          <div class="h-full bg-amber-500" style="width:70%"></div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">OTP UX + offline missing</div>
+      </div>
+      <div>
+        <div class="flex items-baseline justify-between mb-1">
+          <span class="text-slate-400">Tech PWA</span>
+          <span class="mono text-rose-400">C+</span>
+        </div>
+        <div class="h-1.5 rounded-full bg-white/5 overflow-hidden">
+          <div class="h-full bg-rose-500" style="width:58%"></div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Field-context gaps block pilot</div>
+      </div>
+      <div>
+        <div class="flex items-baseline justify-between mb-1">
+          <span class="text-slate-400">Portal</span>
+          <span class="mono text-emerald-400">A−</span>
+        </div>
+        <div class="h-1.5 rounded-full bg-white/5 overflow-hidden">
+          <div class="h-full bg-emerald-500" style="width:90%"></div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Pretty; static only</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ STATS DASHBOARD ═══════════ -->
+<section id="stats" class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 2</span>
+    <h2 class="text-3xl font-bold">At a Glance</h2>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="card rounded-xl p-4"><div class="text-3xl font-extrabold text-indigo-300">~13K</div><div class="text-xs text-slate-400 mt-1">Total LOC (3 apps)</div></div>
+    <div class="card rounded-xl p-4"><div class="text-3xl font-extrabold text-indigo-300">34</div><div class="text-xs text-slate-400 mt-1">Pages across apps</div></div>
+    <div class="card rounded-xl p-4"><div class="text-3xl font-extrabold text-indigo-300">20</div><div class="text-xs text-slate-400 mt-1">Shared components</div></div>
+    <div class="card rounded-xl p-4"><div class="text-3xl font-extrabold text-indigo-300">45</div><div class="text-xs text-slate-400 mt-1">UX issues found</div></div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="card rounded-2xl p-5">
+      <h3 class="text-sm font-semibold mb-3 text-slate-300">Issues by Severity</h3>
+      <canvas id="chartSeverity" height="180"></canvas>
+    </div>
+    <div class="card rounded-2xl p-5">
+      <h3 class="text-sm font-semibold mb-3 text-slate-300">Issues by Category</h3>
+      <canvas id="chartCategory" height="180"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SCOPE & METHOD ═══════════ -->
+<section class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 3</span>
+    <h2 class="text-3xl font-bold">Scope &amp; Methodology</h2>
+  </div>
+  <div class="card rounded-2xl p-6">
+    <div class="grid md:grid-cols-2 gap-6 text-sm">
+      <div>
+        <h4 class="font-semibold mb-2 text-slate-200">Apps Reviewed</h4>
+        <ul class="space-y-1.5 text-slate-400">
+          <li><code class="text-indigo-300">apps/web</code> — Staff admin console (desktop-first)</li>
+          <li><code class="text-indigo-300">apps/customer</code> — Customer self-service PWA</li>
+          <li><code class="text-indigo-300">apps/tech</code> — Field technician PWA</li>
+          <li><code class="text-indigo-300">portal</code> — Services landing page</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-2 text-slate-200">Evaluation Frameworks</h4>
+        <ul class="space-y-1.5 text-slate-400">
+          <li>• Nielsen's 10 Usability Heuristics</li>
+          <li>• WCAG 2.1 AA (color, keyboard, SR)</li>
+          <li>• Mobile Touch Target Guidelines (44px Apple / 48px Material)</li>
+          <li>• Field Context UX (glove/outdoor/offline)</li>
+          <li>• Component-level consistency audit</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-2 text-slate-200">Reference Projects</h4>
+        <ul class="space-y-1.5 text-slate-400">
+          <li>→ DOA Lease System (Toptier house style)</li>
+          <li>→ Notion (modern SaaS benchmark)</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-2 text-slate-200">Deliverable</h4>
+        <ul class="space-y-1.5 text-slate-400">
+          <li>• This HTML report (self-contained, printable)</li>
+          <li>• Issue tickets — ranked by effort &times; impact</li>
+          <li>• 4-week polish roadmap</li>
+          <li>• Quick-win checklist (&lt;1 day each)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ADMIN WEB ═══════════ -->
+<section id="admin" class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 4</span>
+    <h2 class="text-3xl font-bold">Admin Console Review</h2>
+    <span class="tag sev-m">B+ · Strong bones, needs polish</span>
+  </div>
+
+  <!-- Design system -->
+  <details open class="card rounded-2xl mb-4">
+    <summary class="p-5 flex items-center gap-2 font-semibold">
+      <svg class="w-4 h-4 chevron text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      Design System Snapshot
+    </summary>
+    <div class="px-5 pb-5 text-sm text-slate-300 space-y-3 border-t border-white/5 pt-4">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Color Tokens</div>
+          <div class="flex flex-wrap gap-2">
+            <span class="chip"><span class="inline-block w-3 h-3 rounded-full align-middle mr-1" style="background:#e4262a"></span>brand-red</span>
+            <span class="chip"><span class="inline-block w-3 h-3 rounded-full align-middle mr-1" style="background:#0c1016"></span>brand-navy</span>
+            <span class="chip"><span class="inline-block w-3 h-3 rounded-full align-middle mr-1" style="background:#ffce00"></span>brand-gold</span>
+            <span class="chip">status-success/info/warning/danger</span>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Typography</div>
+          <div class="text-sm">Sarabun (300–800) · Barlow (700–900) · <code>font-display</code> for headings</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Radius + Shadows</div>
+          <div><code>rounded-brand</code> (14×), <code>rounded-brand-lg</code> (3×), <code>shadow-brand-{sm,md,lg}</code></div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Icons</div>
+          <div>Material Symbols Outlined — inline via <code>&lt;span class="material-symbols-outlined"&gt;</code></div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Top issues -->
+  <h3 class="text-xl font-semibold mb-3 mt-8">Top Issues (Admin)</h3>
+  <div class="space-y-3">
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No skeleton loaders on data tables</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>CustomersPage.tsx:205–208</code> · <code>ProductsPage.tsx:261–264</code> · <code>ServiceTicketsPage.tsx:175–179</code></div>
+      <div class="text-sm text-slate-300 mb-2">Plain "กำลังโหลด…" text blocks table. Zero visual structure during load → high CLS, feels broken on 3G.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Ship <code>&lt;TableSkeleton rows={8} columns={7} /&gt;</code> with shimmer; reserve row heights.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Drag failures revert silently on Kanban</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>LeadsPage.tsx:197–226</code> — <code>moveStageMut.onError</code> missing toast</div>
+      <div class="text-sm text-slate-300 mb-2">Optimistic update reverts on API failure but user never told why. They'll re-drag the same card 3× before giving up.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> <code>onError: () => toast.error('ย้ายไม่สำเร็จ ลองใหม่อีกครั้ง')</code>. Keep original position via <code>context.prev</code>.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Destructive toggles have no confirm</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>CustomersPage.tsx:236–251</code> · <code>ProductsPage.tsx:283–298</code></div>
+      <div class="text-sm text-slate-300 mb-2">Deactivate / delete is a single click. Can bulk-destroy 10 records with ctrl-click retry.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Wrap toggle in confirm dialog: "ปิดใช้งานลูกค้า [name]? ลูกค้าจะซ่อนจากรายการ" — with Undo toast (sonner-style, 5s timeout) as stretch.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Empty states say "ไม่มีข้อมูล" — no next action</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>CustomersPage.tsx:210–213</code> · <code>FeedbackPage.tsx:152</code></div>
+      <div class="text-sm text-slate-300 mb-2">Gray text on empty list. No icon, no next-step, no visual separator from loading state.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Reusable <code>&lt;EmptyState icon="..." title="..." ctaLabel="..." onCta={...} /&gt;</code>.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Form validation is disabled-button pattern only</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>CustomersPage.tsx:315–320</code> — <code>disabled=&#123;!form.name || ...&#125;</code></div>
+      <div class="text-sm text-slate-300 mb-2">Required fields shown by a grayed-out submit. User doesn't know <i>which</i> field blocks them on a long form. Server errors surface only as toast.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Adopt <code>react-hook-form + zod</code> (already in DOA). Field-level error text below inputs; red outline on focus-out; preserve submit clickable for explicit feedback.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Dashboard has no error fallback</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>DashboardPage.tsx:12–35</code> — queries without <code>isError</code> check</div>
+      <div class="text-sm text-slate-300 mb-2">If any of 4 KPI/chart APIs fail, the card renders empty. User thinks KPI is zero.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Per-card error boundary with "โหลดไม่สำเร็จ · Retry" button.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Long tables without sticky header</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>CustomersPage.tsx:191–303</code> — <code>min-w-[720px]</code> scrolls but <code>&lt;thead&gt;</code> not sticky</div>
+      <div class="text-sm text-slate-300 mb-2">User scrolls row 30 of 40, forgets which column is which.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> <code>thead { position: sticky; top: 0; background: white; z-index: 10; }</code> + subtle shadow on scroll.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Icon-only buttons lack aria-label</div>
+        <span class="tag sev-m">MED · a11y</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>Layout.tsx:141</code> · <code>FeedbackButton.tsx:219</code></div>
+      <div class="text-sm text-slate-300 mb-2">Material Symbols span has no accessible name. Screen reader says "button".</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Require <code>aria-label</code> + <code>title</code> on every icon-only button via ESLint rule.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Profile dropdown isn't keyboard-accessible</div>
+        <span class="tag sev-m">MED · a11y</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>Layout.tsx:207–246</code> — no ESC handler, no <code>role="menu"</code>, no <code>aria-expanded</code></div>
+      <div class="text-sm text-slate-300 mb-2">Can open with mouse only. Tab order leaves menu unreachable.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Use Radix UI <code>&lt;DropdownMenu /&gt;</code> or HeadlessUI <code>&lt;Menu /&gt;</code>.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-l">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Status badges use color only</div>
+        <span class="tag sev-l">LOW · a11y</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>FeedbackPage.tsx:52–58</code> — <code>STATUS_COLOR</code> map has only text-color</div>
+      <div class="text-sm text-slate-300 mb-2">Colorblind users see only gray labels.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Pair color with icon (<code>check_circle</code> for resolved, <code>cancel</code> for closed, etc.).</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-l">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Modal overlay is <code>&lt;div onClick&gt;</code> not button</div>
+        <span class="tag sev-l">LOW · a11y</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>Modal.tsx:14</code></div>
+      <div class="text-sm text-slate-300 mb-2">Not announced as interactive; no focus trap inside modal.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Use <code>&lt;Dialog /&gt;</code> primitive with built-in focus trap + ESC.</div>
+    </div>
+  </div>
+
+  <!-- Positive patterns -->
+  <h3 class="text-xl font-semibold mb-3 mt-8">Admin — What's Already Good</h3>
+  <div class="grid md:grid-cols-2 gap-3">
+    <div class="card rounded-xl p-4 text-sm">
+      <div class="font-semibold text-emerald-300 mb-1">✓ Role-based nav filtering</div>
+      <div class="text-slate-400"><code>Layout.tsx:100–105</code> — admin-only items hidden, not disabled. Matches least-privilege principle.</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <div class="font-semibold text-emerald-300 mb-1">✓ Optimistic kanban drag</div>
+      <div class="text-slate-400"><code>LeadsPage.tsx:199–220</code> — UI updates instantly, rolls back on error (minus missing toast).</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <div class="font-semibold text-emerald-300 mb-1">✓ i18n parity TH/EN (99%)</div>
+      <div class="text-slate-400">330 vs 329 keys — production-ready for Thai staff with English fallback.</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <div class="font-semibold text-emerald-300 mb-1">✓ Responsive grid</div>
+      <div class="text-slate-400"><code>grid-cols-2 sm:grid-cols-4</code> pattern — mobile-first scaling done right.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CUSTOMER PWA ═══════════ -->
+<section id="customer" class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 5</span>
+    <h2 class="text-3xl font-bold">Customer PWA Review</h2>
+    <span class="tag sev-m">B− · OTP + offline gap</span>
+  </div>
+
+  <h3 class="text-xl font-semibold mb-3">Top Issues (Customer)</h3>
+  <div class="space-y-3">
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">OTP input: no auto-advance, no paste</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>LoginPage.tsx:145–155</code></div>
+      <div class="text-sm text-slate-300 mb-2">Single <code>&lt;input&gt;</code>, <code>inputMode="numeric"</code>, but: no auto-focus next digit, no paste handler, no submit on 6-digit complete.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> 6-slot input component (see <code>react-otp-input</code> or custom); <code>autocomplete="one-time-code"</code> for iOS SMS autofill.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No resend OTP timer</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>LoginPage.tsx:15–35</code></div>
+      <div class="text-sm text-slate-300 mb-2">User can spam "Send OTP" repeatedly. No countdown "ส่งใหม่ใน 30s" UX.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> 60s cooldown; disable button; counter visible; "ยังไม่ได้รหัส?" link revealed after countdown.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Photo upload missing on ticket create</div>
+        <span class="tag sev-h">HIGH · feature</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>ReportPage.tsx</code> — form has no file input. Spec requires photos for warranty evidence.</div>
+      <div class="text-sm text-slate-300 mb-2">Thai gym warranty claims need before/after photos. API supports; UI missing.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Add <code>&lt;input type="file" accept="image/*" capture="environment"&gt;</code>; client-side compress (browser-image-compression); upload to S3 via presigned.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Gray-400/500 text on white fails WCAG AA</div>
+        <span class="tag sev-h">HIGH · a11y</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>EquipmentPage.tsx:41</code> · <code>TicketsPage.tsx:85</code> — widespread</div>
+      <div class="text-sm text-slate-300 mb-2"><code>text-gray-500</code> ≈ 4.5:1 (borderline); <code>text-gray-400</code> definitely fails. Thai seniors won't read it outdoors.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Global sed: <code>text-gray-400 → text-gray-600</code>, <code>text-gray-500 → text-gray-700</code>.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Map picker spec'd, not built</div>
+        <span class="tag sev-m">MED · feature</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2">Leaflet imported but no UI. <code>ReportPage.tsx</code> uses plain text ("เช่น ชั้น 2 โซน A") for location.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Either ship Leaflet picker with Nominatim reverse-geocode, or remove leaflet from bundle (saves ~140KB).</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Bottom-nav items &lt; 44px</div>
+        <span class="tag sev-m">MED · a11y</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>BottomNav.tsx:31–47</code> — <code>py-1</code> gives ~28px</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> <code>py-2</code> (32px) or explicit <code>h-14</code>.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No offline queue — ticket draft lost on network drop</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>vite.config.ts</code> registers PWA but no SW caching + no draft persistence</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Autosave form to <code>localStorage</code> on change; restore on mount; queue POST via Workbox Background Sync.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No autocomplete on phone field</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>LoginPage.tsx:99</code> — missing <code>autocomplete="tel"</code></div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> one-liner; unlocks iOS/Android contact autofill.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Hardcoded tel in profile</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>ProfilePage.tsx</code> — <code>tel:021234567</code> hardcoded for support</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> <code>useSetting('support_phone')</code> — already have <code>Setting</code> table with 12 keys.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-l">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Inconsistent empty states (3 variants)</div>
+        <span class="tag sev-l">LOW</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2">Tickets page uses emoji; Equipment uses text; Renewals uses icon. Each feels different.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Shared <code>&lt;EmptyState /&gt;</code> with icon + title + subtitle slots.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TECH PWA ═══════════ -->
+<section id="tech" class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 6</span>
+    <h2 class="text-3xl font-bold">Technician PWA Review</h2>
+    <span class="tag sev-h">C+ · Field context gaps block pilot</span>
+  </div>
+
+  <div class="card rounded-2xl p-5 mb-6" style="background:rgba(248,113,113,.05);border-color:rgba(248,113,113,.2)">
+    <div class="flex items-start gap-3">
+      <span class="text-rose-400 text-2xl">⚠</span>
+      <div class="text-sm text-slate-300">
+        <b class="text-rose-300">Field context warning</b> — Tech app is monolithic (378 LOC in App.tsx), no error boundary, touch targets too small for gloved use, and no offline queue. These are <u>blockers</u> for field deployment. Fix priority 1 before any pilot.
+      </div>
+    </div>
+  </div>
+
+  <h3 class="text-xl font-semibold mb-3">Top Issues (Tech)</h3>
+  <div class="space-y-3">
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Button sizes too small for gloves</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>App.tsx:169,178,188</code> — <code>py-2.5</code> ≈ 40px on Navigate/Call/Stage</div>
+      <div class="text-sm text-slate-300 mb-2">Tech wearing work gloves misses taps. Apple HIG 44, Material 48 — we want <b>56+</b> for field.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Primary actions <code>py-4 text-base min-h-[56px]</code>; secondary <code>py-3 min-h-[48px]</code>.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No offline queue for stage updates</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>lib/queries.ts</code> + <code>App.tsx:122–125</code> — mutation fires once; no retry</div>
+      <div class="text-sm text-slate-300 mb-2">Tech marks "arrived" at customer site with no signal. Stage change lost. Next tap "started repair" fails silently. Work not tracked.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Workbox Background Sync OR custom IndexedDB queue; show pending badge; auto-retry on connectivity.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No error boundary — crash = blank screen</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>App.tsx</code> has no <code>&lt;ErrorBoundary&gt;</code></div>
+      <div class="text-sm text-slate-300 mb-2">GPS permission error, socket reconnect throw → full blank screen. Tech force-reloads, loses state.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> <code>react-error-boundary</code> at App root; fallback with "เกิดข้อผิดพลาด · Refresh" + error report via Sentry.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-h">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">GPS status buried in 11px header text</div>
+        <span class="tag sev-h">HIGH</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>App.tsx:261–279</code></div>
+      <div class="text-sm text-slate-300 mb-2">Tech doesn't know if 30s GPS ping is active. Privacy concern and tracking-accuracy concern.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Persistent badge on active ticket card: "📍 กำลังบันทึกตำแหน่ง · อัปเดตล่าสุด 14s ago". Pulsing dot when live.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Low contrast in sun (bg-white/10)</div>
+        <span class="tag sev-m">MED · a11y</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>App.tsx</code> · <code>styles.css</code> — form surfaces use white on 10% alpha</div>
+      <div class="text-sm text-slate-300 mb-2">4.5:1 marginal; bright sun reflection kills readability.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Use <code>bg-white/20</code> or <code>bg-slate-800</code> solid; text <code>text-white</code> full opacity; target 7:1 AAA.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Logout: no confirmation</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>App.tsx:234–238</code> — single click logs out + clears cache</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Confirm dialog, or hide behind profile menu; consider auto-logout after 60 min idle.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No photo upload on job close</div>
+        <span class="tag sev-m">MED · feature</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2">Spec: "photo close at job end" — UI missing</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> On CLOSED stage, require at least 1 photo; <code>capture="environment"</code>; preview + remove.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No pull-to-refresh + 60s polling</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-400 mb-2"><code>App.tsx:210–214</code></div>
+      <div class="text-sm text-slate-300 mb-2">New ticket assigned → tech waits up to 60s to see it (or until WebSocket push).</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Pull-to-refresh via touch events or <code>react-pull-to-refresh</code>; reduce polling to 30s; rely on WS push.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-m">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">No haptic feedback on stage transitions</div>
+        <span class="tag sev-m">MED</span>
+      </div>
+      <div class="text-sm text-slate-300 mb-2">Tech can't hear or feel that "arrived" was acknowledged in noisy workshop.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> <code>navigator.vibrate([80, 30, 80])</code> on success mutation; optional beep on new ticket push.</div>
+    </div>
+
+    <div class="card rounded-xl p-4 issue-card issue-l">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="font-semibold">Monolithic App.tsx (378 LOC)</div>
+        <span class="tag sev-l">LOW · DX</span>
+      </div>
+      <div class="text-sm text-slate-300 mb-2">Login + Home + TicketCard all in one file. Hard to test in isolation, impossible to code-split.</div>
+      <div class="text-sm text-emerald-300"><b>Fix:</b> Extract to <code>pages/Login.tsx</code>, <code>pages/Home.tsx</code>, <code>components/TicketCard.tsx</code>. Enables lazy routing.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ DOA COMPARISON ═══════════ -->
+<section id="doa" class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 7</span>
+    <h2 class="text-3xl font-bold">DOA Consistency Reference</h2>
+    <span class="tag chip">Toptier House Style</span>
+  </div>
+
+  <p class="text-slate-300 mb-6 max-w-3xl">
+    DOA Lease System is a sibling Toptier product with established conventions.
+    NBA OMS diverges in 2 important ways that will create long-term maintenance cost.
+  </p>
+
+  <div class="card rounded-2xl overflow-hidden mb-6">
+    <table class="neat">
+      <thead>
+        <tr><th>Dimension</th><th>DOA</th><th>NBA OMS</th><th>Recommendation</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>UI foundation</b></td>
+          <td>Material-UI v6 + Tailwind hybrid</td>
+          <td>Tailwind raw, custom components (Button, Input, Modal)</td>
+          <td class="text-amber-300">Neither wrong; pick one across org</td>
+        </tr>
+        <tr>
+          <td><b>Primary color</b></td>
+          <td>Navy <code>#005b9f</code> · Gold accent <code>#d7a94b</code></td>
+          <td>Red <code>brand-red</code> · Navy <code>brand-navy</code></td>
+          <td class="text-emerald-300">OK — different brands (NBA Sport ≠ DOA)</td>
+        </tr>
+        <tr>
+          <td><b>Body font</b></td>
+          <td>Noto Sans Thai · IBM Plex Mono (numeric)</td>
+          <td>Sarabun · Barlow (display)</td>
+          <td class="text-amber-300">Consider IBM Plex Mono for numeric displays (KPIs, prices)</td>
+        </tr>
+        <tr>
+          <td><b>Form lib</b></td>
+          <td>react-hook-form + zod</td>
+          <td>uncontrolled + disabled-button validation</td>
+          <td class="text-rose-300">Adopt RHF+zod; known pattern, typed</td>
+        </tr>
+        <tr>
+          <td><b>Dialog/Modal</b></td>
+          <td>MUI Dialog (focus trap, ESC built-in)</td>
+          <td>Custom Modal (no focus trap)</td>
+          <td class="text-rose-300">Adopt headless primitive (Radix / HeadlessUI)</td>
+        </tr>
+        <tr>
+          <td><b>Dark mode</b></td>
+          <td>Fully supported (Zustand theme-store)</td>
+          <td>Light-only</td>
+          <td class="text-amber-300">Add dark mode — tech app outdoor + admin evening shifts</td>
+        </tr>
+        <tr>
+          <td><b>Breadcrumbs</b></td>
+          <td>PageHeader title + subtitle</td>
+          <td>PageHeader title + subtitle</td>
+          <td class="text-emerald-300">Consistent ✓</td>
+        </tr>
+        <tr>
+          <td><b>KPI styling</b></td>
+          <td>Colored top-border + IBM Plex Mono value</td>
+          <td>Flat card with text</td>
+          <td class="text-amber-300">Adopt DOA pattern — makes dashboards feel "financial-grade"</td>
+        </tr>
+        <tr>
+          <td><b>Status badge</b></td>
+          <td>Inline <code>&#123;label, color, bg, border&#125;</code> config object</td>
+          <td>Color map only (no icon)</td>
+          <td class="text-rose-300">Adopt DOA config shape; pair color with icon</td>
+        </tr>
+        <tr>
+          <td><b>Toast/notif</b></td>
+          <td>MUI Alert inline (dated)</td>
+          <td>None — relies on error page state</td>
+          <td class="text-emerald-300">Both outdated; ship <code>sonner</code> in <code>@oms/shared</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card rounded-2xl p-6">
+    <h4 class="font-semibold mb-3">Cross-Pollination: Ship this shared package</h4>
+    <pre class="mono text-xs text-slate-300 bg-black/20 p-4 rounded-lg overflow-x-auto">packages/shared-ui/
+├── primitives/     { Button, Input, Dialog, Select, Menu } — Radix-based, both DOA &amp; NBA consume
+├── patterns/       { PageHeader, KpiCard, EmptyState, StatusBadge, TableSkeleton }
+├── form/           { Form, FormField } — react-hook-form + zod wrapper
+├── toast/          sonner re-export with brand config
+└── tokens.ts       color/spacing/radius/shadow tokens (brand-scoped)</pre>
+    <div class="text-sm text-slate-400 mt-3">Effort estimate: 1 engineer × 2 weeks. Pays back on DOA + NBA + future Toptier products.</div>
+  </div>
+</section>
+
+<!-- ═══════════ NOTION BENCHMARK ═══════════ -->
+<section id="notion" class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 8</span>
+    <h2 class="text-3xl font-bold">Notion Benchmark — What to Borrow</h2>
+  </div>
+
+  <p class="text-slate-300 mb-6 max-w-3xl">
+    Notion is widely considered the gold standard for modern SaaS UX — not because of visual flair,
+    but because of information density, keyboard-first workflow, and forgiving interactions.
+    Here are five patterns NBA OMS can adopt cheaply.
+  </p>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="tag bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">Pattern 1</span>
+        <h4 class="font-semibold">Command palette (Cmd+K)</h4>
+      </div>
+      <p class="text-sm text-slate-400 mb-3">Global search &amp; navigation in one shortcut. "go to customer #1234", "create ticket", "toggle theme" — keyboard-only flow for power users.</p>
+      <div class="text-xs text-emerald-300 mono">Lib: <code>cmdk</code> (used by Vercel, Linear) · 2-day integration</div>
+    </div>
+
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="tag bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">Pattern 2</span>
+        <h4 class="font-semibold">Optimistic UI + undo toast</h4>
+      </div>
+      <p class="text-sm text-slate-400 mb-3">Every destructive action → instant apply + "Undo" toast for 5s. Users move faster because mistakes are cheap.</p>
+      <div class="text-xs text-emerald-300 mono">Lib: <code>sonner</code> · pattern: <code>onMutate → toast.info('Deleted · Undo', { action: ... })</code></div>
+    </div>
+
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="tag bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">Pattern 3</span>
+        <h4 class="font-semibold">Slash commands in text fields</h4>
+      </div>
+      <p class="text-sm text-slate-400 mb-3">Type <code>/</code> in ticket description → insert customer, product, asset ID mention with autocomplete. Keeps tech &amp; admin in flow.</p>
+      <div class="text-xs text-emerald-300 mono">Lib: <code>tiptap</code> or <code>lexical</code> · 1-week integration for ticket textareas</div>
+    </div>
+
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="tag bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">Pattern 4</span>
+        <h4 class="font-semibold">Inline edit (no modals for small fields)</h4>
+      </div>
+      <p class="text-sm text-slate-400 mb-3">Click a customer phone in a table → edit in place. Press <kbd>Enter</kbd> to save, <kbd>Esc</kbd> to cancel. No round-trip to a modal.</p>
+      <div class="text-xs text-emerald-300 mono">Pattern: <code>useEditable()</code> hook · pairs well with optimistic update</div>
+    </div>
+
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="tag bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">Pattern 5</span>
+        <h4 class="font-semibold">Smart empty states (with CTA + doc link)</h4>
+      </div>
+      <p class="text-sm text-slate-400 mb-3">Not "No data" — instead: illustration + "Looks empty here. <b>Create your first customer</b> or <a>import from CSV</a>." Teaches by guiding.</p>
+      <div class="text-xs text-emerald-300 mono">Shared <code>&lt;EmptyState /&gt;</code> with <code>icon · title · description · action · secondaryAction</code> slots</div>
+    </div>
+
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="tag bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">Pattern 6</span>
+        <h4 class="font-semibold">Progressive disclosure in forms</h4>
+      </div>
+      <p class="text-sm text-slate-400 mb-3">Don't show 25 fields. Show 5 most-common ones + "More options ▼". Reduces cognitive load; conversion up 20%+ (Baymard research).</p>
+      <div class="text-xs text-emerald-300 mono">Apply to: customer create, product create, ticket create</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CONSOLIDATED ROADMAP ═══════════ -->
+<section id="roadmap" class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 9</span>
+    <h2 class="text-3xl font-bold">4-Week Polish Roadmap</h2>
+  </div>
+
+  <div class="space-y-4">
+    <!-- Week 1 -->
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-baseline justify-between mb-3">
+        <div>
+          <span class="text-xs text-rose-400 font-bold uppercase tracking-widest">Week 1 · Critical</span>
+          <h3 class="text-lg font-semibold mt-1">Unblock pilot · a11y + field safety</h3>
+        </div>
+        <span class="tag sev-h">Must-ship</span>
+      </div>
+      <ul class="text-sm text-slate-300 space-y-1.5">
+        <li>• Tech PWA: enlarge buttons to 56px · offline queue for stage updates · error boundary</li>
+        <li>• Global: fix all gray-400/500 on white → gray-600/700</li>
+        <li>• Global: aria-label on all icon-only buttons (ESLint rule)</li>
+        <li>• Customer: OTP 6-slot input · autocomplete=tel · resend timer 60s</li>
+        <li>• Admin: confirm dialog on destructive toggles · error toast on drag fail</li>
+      </ul>
+      <div class="text-xs text-slate-500 mt-3 mono">Effort: ~25 engineer-days · touches: all 3 apps</div>
+    </div>
+
+    <!-- Week 2 -->
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-baseline justify-between mb-3">
+        <div>
+          <span class="text-xs text-amber-400 font-bold uppercase tracking-widest">Week 2 · Foundation</span>
+          <h3 class="text-lg font-semibold mt-1">Extract <code>@oms/shared-ui</code></h3>
+        </div>
+        <span class="tag sev-m">Debt</span>
+      </div>
+      <ul class="text-sm text-slate-300 space-y-1.5">
+        <li>• Create <code>packages/shared-ui</code> workspace</li>
+        <li>• Port <code>Button · Input · Dialog · Select · Menu</code> on Radix primitives (focus trap + ESC)</li>
+        <li>• Extract <code>PageHeader · KpiCard · EmptyState · TableSkeleton · StatusBadge</code></li>
+        <li>• Adopt <code>react-hook-form + zod</code> for form stack</li>
+        <li>• Ship <code>sonner</code> toast globally</li>
+        <li>• Replace FeedbackButton duplication across web/customer/tech (3 copies → 1 import)</li>
+      </ul>
+      <div class="text-xs text-slate-500 mt-3 mono">Effort: ~15 engineer-days · impact: -30% future UI work</div>
+    </div>
+
+    <!-- Week 3 -->
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-baseline justify-between mb-3">
+        <div>
+          <span class="text-xs text-indigo-400 font-bold uppercase tracking-widest">Week 3 · Polish</span>
+          <h3 class="text-lg font-semibold mt-1">Loading · Empty · Error states everywhere</h3>
+        </div>
+        <span class="tag sev-m">Polish</span>
+      </div>
+      <ul class="text-sm text-slate-300 space-y-1.5">
+        <li>• Replace all "กำลังโหลด…" with <code>&lt;TableSkeleton /&gt;</code> or card skeletons</li>
+        <li>• Replace all "ไม่มีข้อมูล" with <code>&lt;EmptyState icon title description cta /&gt;</code></li>
+        <li>• Per-KPI error boundary on Dashboard with Retry</li>
+        <li>• Sticky table headers on long tables</li>
+        <li>• Customer: draft autosave to localStorage · Workbox Background Sync</li>
+        <li>• Tech: pull-to-refresh · haptic on stage transitions · photo close</li>
+      </ul>
+      <div class="text-xs text-slate-500 mt-3 mono">Effort: ~20 engineer-days</div>
+    </div>
+
+    <!-- Week 4 -->
+    <div class="card rounded-2xl p-5">
+      <div class="flex items-baseline justify-between mb-3">
+        <div>
+          <span class="text-xs text-emerald-400 font-bold uppercase tracking-widest">Week 4 · Delight</span>
+          <h3 class="text-lg font-semibold mt-1">Notion-inspired patterns</h3>
+        </div>
+        <span class="tag sev-l">Stretch</span>
+      </div>
+      <ul class="text-sm text-slate-300 space-y-1.5">
+        <li>• <code>cmdk</code> command palette (Cmd+K) for admin navigation</li>
+        <li>• Undo toast on delete (sonner action slot)</li>
+        <li>• Inline edit on customer/product tables</li>
+        <li>• Dark mode toggle (theme-store pattern from DOA)</li>
+        <li>• Progressive disclosure on long create forms</li>
+        <li>• Accessibility audit with <code>axe-core</code> · fix any remaining AA failures</li>
+      </ul>
+      <div class="text-xs text-slate-500 mt-3 mono">Effort: ~18 engineer-days</div>
+    </div>
+  </div>
+
+  <div class="mt-6 card rounded-2xl p-6" style="background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(236,72,153,.08));border-color:rgba(165,180,252,.2)">
+    <h4 class="font-semibold mb-2">Total estimate</h4>
+    <div class="flex items-baseline gap-4 text-sm text-slate-300">
+      <div><span class="mono text-3xl font-bold text-white">~78</span> engineer-days</div>
+      <div>≈ <b>4 sprints</b> with 1 FTE, or <b>2 sprints</b> with 2 FTEs in parallel</div>
+    </div>
+    <div class="mt-3 text-sm text-slate-400">
+      Week 1 is pilot-blocking. Weeks 2–4 can happen in parallel with Sprint 7+ feature development
+      if <code>@oms/shared-ui</code> work goes first.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ QUICK WINS ═══════════ -->
+<section class="mb-20">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 10</span>
+    <h2 class="text-3xl font-bold">Quick Wins (&lt; 1 day each)</h2>
+  </div>
+  <p class="text-slate-400 mb-5 text-sm">Start here tomorrow morning. High ROI, low risk, PR-sized changes.</p>
+  <div class="grid md:grid-cols-2 gap-3">
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ autocomplete="tel"</b> on phone input — one line, unlocks iOS/Android autofill
+      <div class="text-xs text-slate-500 mono mt-1">customer/LoginPage.tsx:99</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ Global replace</b> <code>text-gray-400 → text-gray-600</code>, <code>text-gray-500 → text-gray-700</code>
+      <div class="text-xs text-slate-500 mono mt-1">sed across apps/; fixes 70% of a11y contrast</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ type="button"</b> on all buttons inside forms — prevent accidental submit
+      <div class="text-xs text-slate-500 mono mt-1">ESLint: react/button-has-type</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ <code>scope="col"</code></b> on all table headers — SR association
+      <div class="text-xs text-slate-500 mono mt-1">All tables in admin web</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ bottom-nav <code>py-2</code></b> bumps touch target from 28px→32px (still not ideal, but safer)
+      <div class="text-xs text-slate-500 mono mt-1">customer/BottomNav.tsx</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ <code>autocomplete="one-time-code"</code></b> on OTP input — iOS SMS autofill
+      <div class="text-xs text-slate-500 mono mt-1">customer/LoginPage.tsx</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ ErrorBoundary</b> wrapping tech App — stops blank screen on crash
+      <div class="text-xs text-slate-500 mono mt-1">react-error-boundary — 20-line install</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ useSetting('support_phone')</b> — replace hardcoded <code>tel:021234567</code>
+      <div class="text-xs text-slate-500 mono mt-1">customer/ProfilePage.tsx</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ Remove leaflet</b> from customer bundle (140KB) OR ship the map picker
+      <div class="text-xs text-slate-500 mono mt-1">Don't ship unused deps to mobile users</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ Focus ring</b> on all inputs: <code>focus:ring-2 focus:ring-brand-red focus:ring-offset-1</code>
+      <div class="text-xs text-slate-500 mono mt-1">Via base <code>@apply</code> in Input component</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ Add icons to status badges</b> — not just color
+      <div class="text-xs text-slate-500 mono mt-1">FeedbackPage, CustomersPage, TicketsPage</div>
+    </div>
+    <div class="card rounded-xl p-4 text-sm">
+      <b class="text-indigo-300">✦ <code>role="dialog"</code> + <code>aria-modal</code></b> on Modal.tsx + focus trap via <code>focus-trap-react</code>
+      <div class="text-xs text-slate-500 mono mt-1">10-line change, fixes modal a11y</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ APPENDIX ═══════════ -->
+<section class="mb-16">
+  <div class="flex items-baseline gap-3 mb-6">
+    <span class="text-xs text-slate-500 mono">§ 11</span>
+    <h2 class="text-3xl font-bold">Appendix</h2>
+  </div>
+  <div class="card rounded-2xl p-6 text-sm text-slate-300 space-y-4">
+    <div>
+      <b class="text-slate-200">References used</b>
+      <ul class="mt-2 space-y-1 text-slate-400">
+        <li>• Nielsen Norman Group — 10 Usability Heuristics (2020 rev.)</li>
+        <li>• W3C WCAG 2.1 — Level AA success criteria</li>
+        <li>• Apple Human Interface Guidelines — Touch Target (44pt minimum)</li>
+        <li>• Google Material — Touch Target (48dp minimum)</li>
+        <li>• Baymard Institute — Form UX research (progressive disclosure stats)</li>
+        <li>• Linear, Vercel, Notion — modern SaaS pattern references</li>
+      </ul>
+    </div>
+    <div>
+      <b class="text-slate-200">Tools recommended for ongoing QA</b>
+      <ul class="mt-2 space-y-1 text-slate-400">
+        <li>• <code>axe DevTools</code> Chrome extension — accessibility scan per page</li>
+        <li>• <code>Lighthouse</code> CI — performance + PWA + a11y gates in PRs</li>
+        <li>• <code>Storybook 8</code> + <code>chromatic</code> — visual regression for shared-ui</li>
+        <li>• <code>Playwright</code> — already in repo for E2E</li>
+      </ul>
+    </div>
+    <div>
+      <b class="text-slate-200">Repo artifacts</b>
+      <ul class="mt-2 space-y-1 text-slate-400">
+        <li>• Source scanned: <code>D:/Project/omsandservice/apps/&#123;web,customer,tech&#125;/</code></li>
+        <li>• Reference: <code>D:/propre/doa-lease-system/</code></li>
+        <li>• This report: <code>D:/Project/omsandservice/docs/ux-review.html</code></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="pt-8 border-t border-white/5 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-4">
+  <div>NBA Sport OMS · UX/UI Review · <span class="mono">2026-04-17</span></div>
+  <div class="flex gap-3">
+    <button onclick="window.print()" class="hover:text-slate-300 transition no-print">Print / Save PDF</button>
+    <a href="#summary" class="hover:text-slate-300 transition">↑ Top</a>
+  </div>
+</footer>
+
+</div>
+
+<script>
+// Severity chart
+new Chart(document.getElementById('chartSeverity'), {
+  type: 'doughnut',
+  data: {
+    labels: ['High (Critical)', 'Medium', 'Low'],
+    datasets: [{
+      data: [14, 21, 10],
+      backgroundColor: ['#f87171', '#fbbf24', '#60a5fa'],
+      borderColor: 'rgba(15,23,42,1)',
+      borderWidth: 3
+    }]
+  },
+  options: {
+    plugins: {
+      legend: { labels: { color: '#cbd5e1', font: { size: 12 } }, position: 'bottom' }
+    },
+    cutout: '65%'
+  }
+});
+
+// Category chart
+new Chart(document.getElementById('chartCategory'), {
+  type: 'bar',
+  data: {
+    labels: ['Accessibility', 'Form UX', 'Loading/Empty', 'Touch/Field', 'Consistency', 'Features gap'],
+    datasets: [{
+      data: [12, 8, 7, 9, 5, 4],
+      backgroundColor: 'rgba(165,180,252,.6)',
+      borderColor: 'rgba(165,180,252,1)',
+      borderWidth: 1,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.05)' } },
+      y: { ticks: { color: '#cbd5e1', font: { size: 12 } }, grid: { display: false } }
+    }
+  }
+});
+</script>
+
+</body>
+</html>

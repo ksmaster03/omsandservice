@@ -25,9 +25,9 @@ export default function EquipmentPage() {
       </header>
 
       <div className="px-4 space-y-3">
-        {isLoading && <div className="text-center py-10 text-gray-400">กำลังโหลด...</div>}
+        {isLoading && <div className="text-center py-10 text-gray-600">กำลังโหลด...</div>}
         {!isLoading && data?.length === 0 && (
-          <div className="text-center py-10 text-gray-400 text-sm">ยังไม่มีเครื่องในระบบ</div>
+          <div className="text-center py-10 text-gray-600 text-sm">ยังไม่มีเครื่องในระบบ</div>
         )}
         {data?.map((a: Asset) => (
           <Link
@@ -38,14 +38,14 @@ export default function EquipmentPage() {
             <div className="flex items-start justify-between mb-1">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold text-gray-900 truncate">{a.product.name}</div>
-                <div className="text-[11px] text-gray-500 font-mono">S/N: {a.serialNo}</div>
+                <div className="text-[11px] text-gray-700 font-mono">S/N: {a.serialNo}</div>
               </div>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${warrantyColor[a.warrantyStatus]}`}>
                 {warrantyLabel[a.warrantyStatus]}
               </span>
             </div>
             {a.locationDetail && (
-              <div className="text-[11px] text-gray-500 mb-2">📍 {a.locationDetail}</div>
+              <div className="text-[11px] text-gray-700 mb-2">📍 {a.locationDetail}</div>
             )}
             <div className="grid grid-cols-2 gap-2 mt-2 text-[11px] text-gray-600 bg-gray-50 rounded-brand p-2">
               <div>

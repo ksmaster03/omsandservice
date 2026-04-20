@@ -751,6 +751,7 @@ model Feedback {
   subject     String
   description String
   screenshot  String?
+  attachments Json?
   source      String           @default("admin")
   submittedBy String?
   submitterName String?

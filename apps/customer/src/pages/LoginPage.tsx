@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
@@ -7,6 +7,9 @@ import { useAuth } from '../store/auth';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import ServerStatus from '../components/ServerStatus';
+import OtpInput from '../components/OtpInput';
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -18,6 +21,13 @@ export default function LoginPage() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendIn, setResendIn] = useState(0);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [resendIn]);
 
   async function submitPhone(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +36,23 @@ export default function LoginPage() {
     try {
       await requestOtp(phone);
       setStep('otp');
+      setResendIn(RESEND_COOLDOWN_SECONDS);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      setError(msg ?? t('auth.sendFailed'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendOtp() {
+    if (resendIn > 0 || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await requestOtp(phone);
+      setResendIn(RESEND_COOLDOWN_SECONDS);
+      setCode('');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
       setError(msg ?? t('auth.sendFailed'));
@@ -96,12 +123,14 @@ export default function LoginPage() {
               </label>
               <input
                 id="phone"
+                name="phone"
                 type="tel"
                 inputMode="tel"
+                autoComplete="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder={t('auth.phonePlaceholder')}
-                className="w-full px-3 py-3 bg-white/10 border border-white/20 rounded-brand text-base text-white focus:outline-none focus:border-brand-gold"
+                className="w-full px-3 py-3 bg-white/10 border border-white/20 rounded-brand text-base text-white focus:outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/40"
                 required
               />
             </div>
@@ -139,23 +168,18 @@ export default function LoginPage() {
               </button>
             </div>
             <div>
-              <label htmlFor="code" className="block text-xs font-semibold text-white/70 mb-1">
+              <label className="block text-xs font-semibold text-white/70 mb-2 text-center">
                 {t('auth.otpLabel')}
               </label>
-              <input
-                id="code"
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
+              <OtpInput
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="000000"
-                className="w-full px-3 py-3 bg-white/10 border border-white/20 rounded-brand text-center text-2xl tracking-[0.5em] font-mono text-white focus:outline-none focus:border-brand-gold"
-                required
+                onChange={setCode}
+                disabled={loading}
+                aria-label={t('auth.otpLabel')}
               />
             </div>
             {error && (
-              <div className="text-xs text-brand-red bg-brand-red-light rounded-brand p-2">{error}</div>
+              <div className="text-xs text-brand-red bg-brand-red-light rounded-brand p-2" role="alert">{error}</div>
             )}
             <button
               type="submit"
@@ -163,6 +187,16 @@ export default function LoginPage() {
               className="w-full py-3 bg-brand-red text-white font-semibold rounded-brand disabled:opacity-50"
             >
               {loading ? t('auth.verifying') : t('auth.verify')}
+            </button>
+            <button
+              type="button"
+              onClick={resendOtp}
+              disabled={resendIn > 0 || loading}
+              className="w-full text-xs text-white/70 hover:text-white py-1 disabled:opacity-50"
+            >
+              {resendIn > 0
+                ? `${t('auth.resendIn', { defaultValue: 'ส่งรหัสใหม่ใน' })} ${resendIn}s`
+                : t('auth.resend', { defaultValue: 'ส่งรหัสใหม่' })}
             </button>
           </form>
         )}

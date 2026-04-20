@@ -21,8 +21,9 @@ export default function BottomNav() {
             key={item.to}
             to={item.to}
             end={item.to === '/'}
+            aria-label={item.label}
             className={({ isActive }) =>
-              `flex flex-col items-center flex-1 py-1 ${isActive ? 'text-brand-red' : 'text-gray-500'}`
+              `flex flex-col items-center flex-1 py-2 min-h-[48px] justify-end ${isActive ? 'text-brand-red' : 'text-gray-600'}`
             }
           >
             {({ isActive }) =>
@@ -38,7 +39,7 @@ export default function BottomNav() {
               ) : (
                 <>
                   <span
-                    className={`material-symbols-outlined !text-[22px] ${isActive ? 'text-brand-red' : 'text-gray-500'}`}
+                    className={`material-symbols-outlined !text-[22px] ${isActive ? 'text-brand-red' : 'text-gray-600'}`}
                     aria-hidden="true"
                   >
                     {item.icon}

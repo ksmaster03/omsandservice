@@ -45,7 +45,7 @@ function Kpi({ label, value, color = 'navy' }: { label: string; value: string | 
   };
   return (
     <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-sm p-4">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">{label}</div>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-1">{label}</div>
       <div className={`font-display font-black text-2xl leading-none ${colorClass[color]}`}>{value}</div>
     </div>
   );
@@ -89,7 +89,7 @@ export default function ReportsPage() {
       <div className="p-6 space-y-6">
         {/* Sales KPI row */}
         <div>
-          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">ยอดขาย</div>
+          <div className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-3">ยอดขาย</div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <Kpi label="ลูกค้าทั้งหมด" value={summary.data?.sales.customers ?? '—'} />
             <Kpi label="Leads กำลังดำเนินการ" value={summary.data?.sales.activeLeads ?? '—'} color="info" />
@@ -105,7 +105,7 @@ export default function ReportsPage() {
 
         {/* After-sales KPI row */}
         <div>
-          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">After-Sales</div>
+          <div className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-3">After-Sales</div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <Kpi label="เครื่องทั้งหมด" value={summary.data?.operations.assetsTotal ?? '—'} />
             <Kpi label="Installs รอคิว" value={summary.data?.operations.installsPending ?? '—'} color="gold" />
@@ -119,7 +119,7 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-sm p-5">
             <div className="font-display font-bold text-sm text-brand-navy mb-4">Pipeline — มูลค่าตามสถานะ</div>
-            {pipelineEntries.length === 0 && <div className="text-xs text-gray-400 text-center py-6">ยังไม่มี leads</div>}
+            {pipelineEntries.length === 0 && <div className="text-xs text-gray-600 text-center py-6">ยังไม่มี leads</div>}
             {pipelineEntries.map(([stage, v]) => (
               <BarRow
                 key={stage}
@@ -133,7 +133,7 @@ export default function ReportsPage() {
 
           <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-sm p-5">
             <div className="font-display font-bold text-sm text-brand-navy mb-4">ยอดขายแยกตามแบรนด์</div>
-            {brandEntries.length === 0 && <div className="text-xs text-gray-400 text-center py-6">ยังไม่มีการขาย</div>}
+            {brandEntries.length === 0 && <div className="text-xs text-gray-600 text-center py-6">ยังไม่มีการขาย</div>}
             {brandEntries.map(([brand, v]) => (
               <BarRow
                 key={brand}
@@ -148,7 +148,7 @@ export default function ReportsPage() {
 
         <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-sm p-5">
           <div className="font-display font-bold text-sm text-brand-navy mb-4">Service Tickets ตามสถานะ</div>
-          {ticketEntries.length === 0 && <div className="text-xs text-gray-400 text-center py-6">ยังไม่มี tickets</div>}
+          {ticketEntries.length === 0 && <div className="text-xs text-gray-600 text-center py-6">ยังไม่มี tickets</div>}
           {ticketEntries.map(([stage, count]) => (
             <BarRow
               key={stage}

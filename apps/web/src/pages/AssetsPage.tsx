@@ -41,7 +41,7 @@ export default function AssetsPage() {
       <div className="p-6">
         <div className="mb-4 flex gap-3 flex-wrap">
           <div className="relative flex-1 max-w-md">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-400">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-600">
               search
             </span>
             <input
@@ -55,7 +55,7 @@ export default function AssetsPage() {
           <div className="flex gap-1 bg-gray-100 rounded-brand p-1">
             <button
               onClick={() => setFilter('')}
-              className={`px-3 py-1 rounded text-xs font-semibold ${!filter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+              className={`px-3 py-1 rounded text-xs font-semibold ${!filter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
             >
               ทั้งหมด
             </button>
@@ -63,7 +63,7 @@ export default function AssetsPage() {
               <button
                 key={s}
                 onClick={() => setFilter(s)}
-                className={`px-3 py-1 rounded text-xs font-semibold ${filter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+                className={`px-3 py-1 rounded text-xs font-semibold ${filter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
               >
                 {warrantyLabel[s]}
               </button>
@@ -75,24 +75,24 @@ export default function AssetsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">Serial No</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">สินค้า</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ลูกค้า</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ติดตั้ง</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ประกัน</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">PM ถัดไป</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">Tickets</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">Serial No</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">สินค้า</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ลูกค้า</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ติดตั้ง</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ประกัน</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">PM ถัดไป</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">Tickets</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-gray-400">กำลังโหลด...</td>
+                  <td colSpan={7} className="text-center py-8 text-gray-600">กำลังโหลด...</td>
                 </tr>
               )}
               {!isLoading && data?.items.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-gray-400">ยังไม่มี Asset</td>
+                  <td colSpan={7} className="text-center py-8 text-gray-600">ยังไม่มี Asset</td>
                 </tr>
               )}
               {data?.items.map((a: Asset) => (
@@ -100,7 +100,7 @@ export default function AssetsPage() {
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-brand-navy">{a.serialNo}</td>
                   <td className="px-4 py-3">
                     <div className="text-sm font-semibold text-gray-900">{a.product.name}</div>
-                    <div className="text-[10px] text-gray-500 font-mono">{a.product.sku}</div>
+                    <div className="text-[10px] text-gray-700 font-mono">{a.product.sku}</div>
                   </td>
                   <td className="px-4 py-3 text-gray-700">{a.customer.name}</td>
                   <td className="px-4 py-3 text-xs text-gray-600">
@@ -110,7 +110,7 @@ export default function AssetsPage() {
                     <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${warrantyPill[a.warrantyStatus]}`}>
                       {warrantyLabel[a.warrantyStatus]}
                     </div>
-                    <div className="text-[10px] text-gray-500 mt-0.5">
+                    <div className="text-[10px] text-gray-700 mt-0.5">
                       {a.warrantyDaysLeft > 0 ? `เหลือ ${a.warrantyDaysLeft} วัน` : `เลย ${Math.abs(a.warrantyDaysLeft)} วัน`}
                     </div>
                   </td>
@@ -121,7 +121,7 @@ export default function AssetsPage() {
                     {a._count.tickets > 0 ? (
                       <span className="text-xs font-bold text-brand-red">{a._count.tickets}</span>
                     ) : (
-                      <span className="text-xs text-gray-400">–</span>
+                      <span className="text-xs text-gray-600">–</span>
                     )}
                   </td>
                 </tr>

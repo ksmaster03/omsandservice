@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import TableSkeleton from '../components/TableSkeleton';
+import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
@@ -34,7 +36,20 @@ const STAGE_COLOR: Record<string, string> = {
   REFUNDED: 'bg-status-success-light text-status-success',
   REPLACED: 'bg-status-success-light text-status-success',
   REFURBISHED: 'bg-status-success-light text-status-success',
-  CANCELLED: 'bg-gray-200 text-gray-500',
+  CANCELLED: 'bg-gray-200 text-gray-700',
+};
+
+const STAGE_ICON: Record<string, string> = {
+  REQUESTED: 'inbox',
+  APPROVED: 'check',
+  REJECTED: 'close',
+  PICKUP_SCHEDULED: 'schedule',
+  PICKED_UP: 'local_shipping',
+  INSPECTING: 'search',
+  REFUNDED: 'payments',
+  REPLACED: 'swap_horiz',
+  REFURBISHED: 'verified',
+  CANCELLED: 'cancel',
 };
 
 export default function RmaPage() {
@@ -116,7 +131,7 @@ export default function RmaPage() {
         <div className="mb-4 flex gap-1 bg-gray-100 rounded-brand p-1 w-fit flex-wrap">
           <button
             onClick={() => setStageFilter('')}
-            className={`px-3 py-1 rounded text-xs font-semibold ${!stageFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+            className={`px-3 py-1 rounded text-xs font-semibold ${!stageFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
           >
             {t('common.all')}
           </button>
@@ -124,7 +139,7 @@ export default function RmaPage() {
             <button
               key={s}
               onClick={() => setStageFilter(s)}
-              className={`px-3 py-1 rounded text-xs font-semibold ${stageFilter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+              className={`px-3 py-1 rounded text-xs font-semibold ${stageFilter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
             >
               {RMA_STAGE_LABELS_TH[s]}
             </button>
@@ -133,25 +148,23 @@ export default function RmaPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[760px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('rmas.colNo')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('rmas.colCustomer')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('rmas.colAsset')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('rmas.colReason')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.status')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('rmas.colNo')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('rmas.colCustomer')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('rmas.colAsset')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('rmas.colReason')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('common.status')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700"></th>
               </tr>
             </thead>
             <tbody>
-              {list.isLoading && (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">{t('common.loading')}</td>
-                </tr>
-              )}
+              {list.isLoading && <TableSkeleton rows={8} columns={6} />}
               {!list.isLoading && list.data?.items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">{t('rmas.empty')}</td>
+                  <td colSpan={6} className="p-0">
+                    <EmptyState icon="assignment_return" title={t('rmas.empty')} variant="compact" />
+                  </td>
                 </tr>
               )}
               {list.data?.items.map((r: Rma) => (
@@ -160,13 +173,14 @@ export default function RmaPage() {
                   <td className="px-4 py-3 text-gray-900 font-semibold">{r.customer.name}</td>
                   <td className="px-4 py-3 text-xs text-gray-700">
                     {r.asset.product.name}
-                    <div className="font-mono text-[10px] text-gray-500">{r.asset.serialNo}</div>
+                    <div className="font-mono text-[10px] text-gray-700">{r.asset.serialNo}</div>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-700">
                     {RMA_REASON_LABELS_TH[r.reason as keyof typeof RMA_REASON_LABELS_TH] ?? r.reason}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${STAGE_COLOR[r.stage] ?? 'bg-gray-100'}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STAGE_COLOR[r.stage] ?? 'bg-gray-100 text-gray-700'}`}>
+                      <span className="material-symbols-outlined !text-[13px]" aria-hidden="true">{STAGE_ICON[r.stage] ?? 'circle'}</span>
                       {RMA_STAGE_LABELS_TH[r.stage as RmaStage] ?? r.stage}
                     </span>
                   </td>
@@ -188,7 +202,7 @@ export default function RmaPage() {
         onClose={() => setSelectedId(null)}
         title={detail.data ? t('rmas.detailTitle', { no: detail.data.rmaNo }) : t('rmas.title')}
       >
-        {detail.isLoading && <div className="text-gray-400 text-sm py-4">{t('common.loading')}</div>}
+        {detail.isLoading && <div className="text-gray-600 text-sm py-4">{t('common.loading')}</div>}
         {detail.data && (
           <div className="space-y-3 text-sm">
             <div className="text-xs text-gray-600 space-y-1">
@@ -206,7 +220,8 @@ export default function RmaPage() {
               </div>
               <div>
                 {t('common.status')}:{' '}
-                <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${STAGE_COLOR[detail.data.stage]}`}>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STAGE_COLOR[detail.data.stage] ?? ''}`}>
+                  <span className="material-symbols-outlined !text-[13px]" aria-hidden="true">{STAGE_ICON[detail.data.stage] ?? 'circle'}</span>
                   {RMA_STAGE_LABELS_TH[detail.data.stage as RmaStage] ?? detail.data.stage}
                 </span>
               </div>
@@ -222,7 +237,7 @@ export default function RmaPage() {
               <div className="space-y-1 text-[11px] text-gray-600">
                 {detail.data.events.map((e) => (
                   <div key={e.id} className="flex gap-2">
-                    <span className="font-mono text-gray-400">
+                    <span className="font-mono text-gray-600">
                       {new Date(e.createdAt).toLocaleString('th-TH', {
                         day: '2-digit',
                         month: 'short',
@@ -231,7 +246,7 @@ export default function RmaPage() {
                       })}
                     </span>
                     <span className="font-semibold">{RMA_STAGE_LABELS_TH[e.stage as RmaStage] ?? e.stage}</span>
-                    {e.note && <span className="text-gray-500">— {e.note}</span>}
+                    {e.note && <span className="text-gray-700">— {e.note}</span>}
                   </div>
                 ))}
               </div>

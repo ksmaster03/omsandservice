@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import CommandPalette from './components/CommandPalette';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CustomersPage from './pages/CustomersPage';
@@ -78,6 +80,18 @@ export default function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     <FeedbackButton source="admin" />
+    <CommandPalette />
+    <Toaster
+      position="top-right"
+      richColors
+      closeButton
+      duration={4000}
+      toastOptions={{
+        classNames: {
+          toast: 'font-[Sarabun,system-ui,sans-serif]',
+        },
+      }}
+    />
     </>
   );
 }

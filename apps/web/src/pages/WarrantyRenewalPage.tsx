@@ -25,7 +25,7 @@ const STATUS_COLOR: Record<Renewal['status'], string> = {
   OFFERED: 'bg-status-warning-light text-brand-gold-text',
   ACCEPTED: 'bg-status-info-light text-status-info',
   PAID: 'bg-status-success-light text-status-success',
-  EXPIRED: 'bg-gray-200 text-gray-500',
+  EXPIRED: 'bg-gray-200 text-gray-700',
 };
 
 export default function WarrantyRenewalPage() {
@@ -84,13 +84,13 @@ export default function WarrantyRenewalPage() {
         <div className="mb-4 flex gap-1 bg-gray-100 rounded-brand p-1 w-fit">
           <button
             onClick={() => setTab('candidates')}
-            className={`px-3 py-1 rounded text-xs font-semibold ${tab === 'candidates' ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+            className={`px-3 py-1 rounded text-xs font-semibold ${tab === 'candidates' ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
           >
             รอเสนอ ({candidates.data?.length ?? 0})
           </button>
           <button
             onClick={() => setTab('offers')}
-            className={`px-3 py-1 rounded text-xs font-semibold ${tab === 'offers' ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+            className={`px-3 py-1 rounded text-xs font-semibold ${tab === 'offers' ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
           >
             ข้อเสนอทั้งหมด ({offers.data?.total ?? 0})
           </button>
@@ -99,25 +99,25 @@ export default function WarrantyRenewalPage() {
         {tab === 'candidates' && (
           <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">เครื่อง</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ลูกค้า</th>
-                  <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ประกันเหลือ</th>
-                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ราคาแนะนำ</th>
-                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
+                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">เครื่อง</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ลูกค้า</th>
+                  <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ประกันเหลือ</th>
+                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ราคาแนะนำ</th>
+                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700"></th>
                 </tr>
               </thead>
               <tbody>
-                {candidates.isLoading && <tr><td colSpan={5} className="text-center py-8 text-gray-400">กำลังโหลด...</td></tr>}
+                {candidates.isLoading && <tr><td colSpan={5} className="text-center py-8 text-gray-600">กำลังโหลด...</td></tr>}
                 {!candidates.isLoading && candidates.data?.length === 0 && (
-                  <tr><td colSpan={5} className="text-center py-8 text-gray-400">ไม่มีเครื่องที่ต้องต่อประกันตอนนี้</td></tr>
+                  <tr><td colSpan={5} className="text-center py-8 text-gray-600">ไม่มีเครื่องที่ต้องต่อประกันตอนนี้</td></tr>
                 )}
                 {candidates.data?.map((a) => (
                   <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="text-sm font-semibold text-gray-900">{a.product.name}</div>
-                      <div className="text-[10px] text-gray-500 font-mono">{a.serialNo}</div>
+                      <div className="text-[10px] text-gray-700 font-mono">{a.serialNo}</div>
                     </td>
                     <td className="px-4 py-3 text-gray-700">{a.customer.name}</td>
                     <td className="px-4 py-3 text-center">
@@ -127,7 +127,7 @@ export default function WarrantyRenewalPage() {
                     </td>
                     <td className="px-4 py-3 text-right text-xs">
                       <div>Std: ฿{a.suggestedPrice.standard12.toLocaleString()}</div>
-                      <div className="text-gray-500">Prem: ฿{a.suggestedPrice.premium12.toLocaleString()}</div>
+                      <div className="text-gray-700">Prem: ฿{a.suggestedPrice.premium12.toLocaleString()}</div>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button
@@ -150,26 +150,26 @@ export default function WarrantyRenewalPage() {
         {tab === 'offers' && (
           <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">เครื่อง / ลูกค้า</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ประเภท</th>
-                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ราคา</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ประกันใหม่ถึง</th>
-                  <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">สถานะ</th>
-                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
+                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">เครื่อง / ลูกค้า</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ประเภท</th>
+                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ราคา</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ประกันใหม่ถึง</th>
+                  <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">สถานะ</th>
+                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700"></th>
                 </tr>
               </thead>
               <tbody>
-                {offers.isLoading && <tr><td colSpan={6} className="text-center py-8 text-gray-400">กำลังโหลด...</td></tr>}
+                {offers.isLoading && <tr><td colSpan={6} className="text-center py-8 text-gray-600">กำลังโหลด...</td></tr>}
                 {!offers.isLoading && offers.data?.items.length === 0 && (
-                  <tr><td colSpan={6} className="text-center py-8 text-gray-400">ยังไม่มีข้อเสนอ</td></tr>
+                  <tr><td colSpan={6} className="text-center py-8 text-gray-600">ยังไม่มีข้อเสนอ</td></tr>
                 )}
                 {offers.data?.items.map((r: Renewal) => (
                   <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="text-sm font-semibold text-gray-900">{r.asset.customer.name}</div>
-                      <div className="text-[11px] text-gray-500">{r.asset.product.name} · <span className="font-mono">{r.asset.serialNo}</span></div>
+                      <div className="text-[11px] text-gray-700">{r.asset.product.name} · <span className="font-mono">{r.asset.serialNo}</span></div>
                     </td>
                     <td className="px-4 py-3 text-xs">{r.type === 'PREMIUM' ? 'Premium' : 'Standard'}</td>
                     <td className="px-4 py-3 text-right font-semibold">฿{Number(r.price).toLocaleString()}</td>
@@ -221,7 +221,7 @@ export default function WarrantyRenewalPage() {
             <div className="bg-gray-50 rounded-brand p-3 mb-3 text-xs">
               <div><strong>{offerFor.customer.name}</strong></div>
               <div>{offerFor.product.name} · <span className="font-mono">{offerFor.serialNo}</span></div>
-              <div className="text-gray-500 mt-1">ประกันปัจจุบันเหลือ {offerFor.daysLeft} วัน</div>
+              <div className="text-gray-700 mt-1">ประกันปัจจุบันเหลือ {offerFor.daysLeft} วัน</div>
             </div>
 
             <div className="mb-3">

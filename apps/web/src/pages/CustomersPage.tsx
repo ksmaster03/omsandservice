@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
+import EmptyState from '../components/EmptyState';
+import TableSkeleton from '../components/TableSkeleton';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { listCustomers, createCustomer, updateCustomer, type Customer } from '../lib/queries';
 
 type FormState = {
@@ -57,6 +61,7 @@ export default function CustomersPage() {
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<Customer | null>(null);
 
   useEffect(() => {
     if (editing) {
@@ -131,7 +136,14 @@ export default function CustomersPage() {
   const toggleMut = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       updateCustomer(id, { active }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['customers'] }),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['customers'] });
+      setToggleTarget(null);
+      toast.success(vars.active ? 'เปิดใช้งานลูกค้าแล้ว' : 'ปิดใช้งานลูกค้าแล้ว');
+    },
+    onError: () => {
+      toast.error('อัปเดตสถานะลูกค้าไม่สำเร็จ ลองใหม่อีกครั้ง');
+    },
   });
 
   function closeEdit() {
@@ -156,7 +168,7 @@ export default function CustomersPage() {
       <div className="p-4 sm:p-6">
         <div className="mb-4 flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-400">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-600">
               search
             </span>
             <input
@@ -179,7 +191,7 @@ export default function CustomersPage() {
                   setPage(1);
                 }}
                 className={`px-3 py-1 rounded text-xs font-semibold ${
-                  statusFilter === k ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'
+                  statusFilter === k ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'
                 }`}
               >
                 {k === 'all' ? t('common.all') : k === 'active' ? t('common.active') : t('common.inactive')}
@@ -190,26 +202,29 @@ export default function CustomersPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[720px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('customers.colName')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('customers.colType')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('customers.colContact')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('customers.colPhone')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('customers.colEmail')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.status')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('customers.colName')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('customers.colType')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('customers.colContact')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('customers.colPhone')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('customers.colEmail')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('common.status')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {isLoading && (
-                <tr>
-                  <td colSpan={7} className="text-center py-8 text-gray-400">{t('common.loading')}</td>
-                </tr>
-              )}
+              {isLoading && <TableSkeleton rows={8} columns={7} />}
               {!isLoading && data?.items.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-gray-400">{t('common.noData')}</td>
+                  <td colSpan={7} className="p-0">
+                    <EmptyState
+                      icon="groups"
+                      title={t('customers.emptyTitle', { defaultValue: 'ยังไม่มีลูกค้า' })}
+                      description={t('customers.emptyDesc', { defaultValue: 'เริ่มต้นจากการเพิ่มลูกค้ารายใหม่' })}
+                      cta={{ label: '+ ' + t('customers.addNew', { defaultValue: 'เพิ่มลูกค้า' }), onClick: () => setOpenCreate(true) }}
+                    />
+                  </td>
                 </tr>
               )}
               {data?.items.map((c) => (
@@ -235,12 +250,12 @@ export default function CustomersPage() {
                   <td className="px-4 py-3 text-center">
                     <button
                       type="button"
-                      onClick={() => toggleMut.mutate({ id: c.id, active: !c.active })}
+                      onClick={() => setToggleTarget(c)}
                       disabled={toggleMut.isPending}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${
                         c.active
                           ? 'bg-status-success-light text-status-success hover:bg-status-success hover:text-white'
-                          : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                       title={c.active ? t('customers.toggleActive') : t('customers.toggleInactive')}
                     >
@@ -344,6 +359,21 @@ export default function CustomersPage() {
       >
         <CustomerForm form={form} setForm={setForm} error={error} />
       </Modal>
+
+      <ConfirmDialog
+        open={!!toggleTarget}
+        title={toggleTarget?.active
+          ? t('customers.confirmDeactivateTitle', { defaultValue: 'ปิดใช้งานลูกค้ารายนี้?' })
+          : t('customers.confirmActivateTitle', { defaultValue: 'เปิดใช้งานลูกค้ารายนี้?' })}
+        description={toggleTarget?.active
+          ? `"${toggleTarget?.name}" จะถูกซ่อนจากรายการค้นหาและไม่สามารถใช้สร้างออเดอร์ใหม่`
+          : `"${toggleTarget?.name}" จะกลับมาแสดงในรายการและใช้งานได้ตามปกติ`}
+        confirmLabel={toggleTarget?.active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+        variant={toggleTarget?.active ? 'danger' : 'primary'}
+        loading={toggleMut.isPending}
+        onConfirm={() => toggleTarget && toggleMut.mutate({ id: toggleTarget.id, active: !toggleTarget.active })}
+        onCancel={() => setToggleTarget(null)}
+      />
     </>
   );
 }
@@ -430,7 +460,7 @@ function CustomerForm({
         onChange={(e) => setForm({ ...form, alternateAddress: e.target.value })}
       />
       <div className="border-t border-gray-200 pt-3 mt-1">
-        <div className="text-[10px] text-gray-400 mb-2 font-semibold uppercase">WMS Integration</div>
+        <div className="text-[10px] text-gray-600 mb-2 font-semibold uppercase">WMS Integration</div>
         <Input
           id="c-wms"
           label="WMS Code"

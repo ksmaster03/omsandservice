@@ -19,7 +19,7 @@ const STAGE_COLOR: Record<TicketStage, string> = {
   ARRIVED: 'bg-brand-gold-light text-brand-gold-text',
   REPAIRING: 'bg-status-info-light text-status-info',
   CLOSED: 'bg-status-success-light text-status-success',
-  CANCELLED: 'bg-gray-200 text-gray-500',
+  CANCELLED: 'bg-gray-200 text-gray-700',
 };
 
 const PRIORITY_COLOR: Record<Priority, string> = {
@@ -44,11 +44,11 @@ export default function TicketsPage() {
       </header>
 
       <div className="px-4 space-y-4">
-        {isLoading && <div className="text-center py-10 text-gray-400">กำลังโหลด...</div>}
+        {isLoading && <div className="text-center py-10 text-gray-600">กำลังโหลด...</div>}
 
         {!isLoading && open.length > 0 && (
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">กำลังดำเนินการ</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-2">กำลังดำเนินการ</div>
             <div className="space-y-2">
               {open.map((t) => <TicketCard key={t.id} t={t} />)}
             </div>
@@ -57,7 +57,7 @@ export default function TicketsPage() {
 
         {!isLoading && closed.length > 0 && (
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">ประวัติ</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-700 mb-2">ประวัติ</div>
             <div className="space-y-2">
               {closed.slice(0, 10).map((t) => <TicketCard key={t.id} t={t} />)}
             </div>
@@ -65,7 +65,7 @@ export default function TicketsPage() {
         )}
 
         {!isLoading && data?.length === 0 && (
-          <div className="text-center py-10 text-gray-400 text-sm">
+          <div className="text-center py-10 text-gray-600 text-sm">
             <div className="text-4xl mb-2">✨</div>
             ยังไม่มีประวัติแจ้งซ่อม
           </div>
@@ -82,19 +82,19 @@ function TicketCard({ t }: { t: Ticket }) {
       className="block bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 p-4"
     >
       <div className="flex items-center justify-between mb-1.5">
-        <div className="font-mono text-[11px] text-gray-500">{t.ticketNo}</div>
+        <div className="font-mono text-[11px] text-gray-700">{t.ticketNo}</div>
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${PRIORITY_COLOR[t.priority]}`}>
           {t.priority}
         </span>
       </div>
       <div className="text-sm font-semibold text-gray-900">{t.asset.product.name}</div>
-      <div className="text-[11px] text-gray-500 font-mono">{t.asset.serialNo}</div>
+      <div className="text-[11px] text-gray-700 font-mono">{t.asset.serialNo}</div>
       <div className="text-xs text-gray-600 mt-1 line-clamp-1">{t.description}</div>
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STAGE_COLOR[t.stage]}`}>
           {STAGE_LABEL[t.stage]}
         </span>
-        <span className="text-[10px] text-gray-400">{new Date(t.createdAt).toLocaleDateString('th-TH')}</span>
+        <span className="text-[10px] text-gray-600">{new Date(t.createdAt).toLocaleDateString('th-TH')}</span>
       </div>
     </Link>
   );

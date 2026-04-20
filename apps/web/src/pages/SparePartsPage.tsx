@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import TableSkeleton from '../components/TableSkeleton';
+import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
@@ -39,27 +41,33 @@ export default function SparePartsPage() {
       <div className="p-4 sm:p-6">
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[700px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">Part No</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">{t('common.name')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-500">Category</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-500">On Hand</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-500">Reorder</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-500">Cost</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-500">Sell</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">Part No</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">{t('common.name')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase text-gray-700">Category</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-700">On Hand</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-700">Reorder</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-700">Cost</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase text-gray-700">Sell</th>
               </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan={7} className="text-center py-8 text-gray-400">{t('common.loading')}</td></tr>}
-              {!isLoading && (!data || data.length === 0) && <tr><td colSpan={7} className="text-center py-8 text-gray-400">ยังไม่มีอะไหล่</td></tr>}
+              {isLoading && <TableSkeleton rows={8} columns={7} />}
+              {!isLoading && (!data || data.length === 0) && (
+                <tr>
+                  <td colSpan={7} className="p-0">
+                    <EmptyState icon="settings_suggest" title="ยังไม่มีอะไหล่" variant="compact" />
+                  </td>
+                </tr>
+              )}
               {data?.map((p) => (
                 <tr key={p.id} className={`border-b border-gray-100 hover:bg-gray-50 ${p.onHand <= p.reorderAt ? 'bg-orange-50/50' : ''}`}>
                   <td className="px-4 py-3 font-mono text-xs">{p.partNo}</td>
                   <td className="px-4 py-3 font-semibold">{p.name}</td>
                   <td className="px-4 py-3 text-xs text-gray-600">{p.category || '—'}</td>
                   <td className={`px-4 py-3 text-right font-mono font-bold ${p.onHand <= p.reorderAt ? 'text-brand-red' : 'text-status-success'}`}>{p.onHand}</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs text-gray-500">{p.reorderAt}</td>
+                  <td className="px-4 py-3 text-right font-mono text-xs text-gray-700">{p.reorderAt}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs">{p.costPrice ? `฿${Number(p.costPrice).toLocaleString()}` : '—'}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs">{p.sellPrice ? `฿${Number(p.sellPrice).toLocaleString()}` : '—'}</td>
                 </tr>

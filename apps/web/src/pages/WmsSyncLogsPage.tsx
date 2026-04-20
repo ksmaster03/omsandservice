@@ -46,7 +46,7 @@ export default function WmsSyncLogsPage() {
         <div className="mb-4 flex gap-1 bg-gray-100 rounded-brand p-1 w-fit">
           <button
             onClick={() => setStatusFilter('')}
-            className={`px-3 py-1 rounded text-xs font-semibold ${!statusFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+            className={`px-3 py-1 rounded text-xs font-semibold ${!statusFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
           >
             ทั้งหมด
           </button>
@@ -54,7 +54,7 @@ export default function WmsSyncLogsPage() {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1 rounded text-xs font-semibold ${statusFilter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+              className={`px-3 py-1 rounded text-xs font-semibold ${statusFilter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
             >
               {s}
             </button>
@@ -63,19 +63,19 @@ export default function WmsSyncLogsPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">Entity</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">Action</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">Status</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">When</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">Detail</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">Entity</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">Action</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">Status</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">When</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">Detail</th>
               </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan={5} className="text-center py-8 text-gray-400">กำลังโหลด...</td></tr>}
+              {isLoading && <tr><td colSpan={5} className="text-center py-8 text-gray-600">กำลังโหลด...</td></tr>}
               {!isLoading && data?.items.length === 0 && (
-                <tr><td colSpan={5} className="text-center py-8 text-gray-400">ยังไม่มีการ sync</td></tr>
+                <tr><td colSpan={5} className="text-center py-8 text-gray-600">ยังไม่มีการ sync</td></tr>
               )}
               {data?.items.map((log: WmsSyncLog) => (
                 <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">

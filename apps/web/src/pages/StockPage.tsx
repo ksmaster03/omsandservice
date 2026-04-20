@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import Spinner from '../components/Spinner';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
@@ -149,10 +150,10 @@ export default function StockPage() {
         {/* WMS sync control bar */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-white rounded-brand-lg border border-gray-200 shadow-brand-sm px-4 py-3">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined !text-[20px] text-gray-400">cloud_sync</span>
+            <span className="material-symbols-outlined !text-[20px] text-gray-600">cloud_sync</span>
             <div>
               <div className="text-xs font-semibold text-gray-700">WMS Auto Sync</div>
-              <div className="text-[10px] text-gray-400">
+              <div className="text-[10px] text-gray-600">
                 {wmsUpdatedAt
                   ? `Last: ${new Date(wmsUpdatedAt).toLocaleTimeString('th-TH')} · ${wmsAutoRefresh ? 'Next in 30 min' : 'Paused'}`
                   : 'Not loaded yet'}
@@ -188,7 +189,7 @@ export default function StockPage() {
         {/* Search + page size */}
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-400">search</span>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-600">search</span>
             <input
               type="text"
               placeholder={t('products.searchPlaceholder')}
@@ -197,7 +198,7 @@ export default function StockPage() {
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-brand text-sm focus:outline-none focus:border-brand-red"
             />
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-gray-700">
             <span>Show</span>
             <select
               value={pageSize}
@@ -216,31 +217,31 @@ export default function StockPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm min-w-[860px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('stock.colSku')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('stock.colName')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('stock.onHand')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('stock.reserved')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('stock.available')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('stock.reorderAt')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">WMS</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('stock.colSku')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('stock.colName')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('stock.onHand')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('stock.reserved')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('stock.available')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('stock.reorderAt')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">WMS</th>
                 {isAdmin && (
-                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
+                  <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700"></th>
                 )}
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-gray-400">
+                  <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-gray-600">
                     {t('common.loading')}
                   </td>
                 </tr>
               )}
               {!isLoading && totalFiltered === 0 && (
                 <tr>
-                  <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-gray-400">
+                  <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-gray-600">
                     {search ? `No results for "${search}"` : t('stock.empty')}
                   </td>
                 </tr>
@@ -250,11 +251,11 @@ export default function StockPage() {
                   <td className="px-4 py-3 font-mono text-xs text-gray-600">{s.product.sku}</td>
                   <td className="px-4 py-3 font-semibold text-gray-900">{s.product.name}</td>
                   <td className="px-4 py-3 text-right font-mono">{s.onHand}</td>
-                  <td className="px-4 py-3 text-right font-mono text-gray-500">{s.reserved}</td>
+                  <td className="px-4 py-3 text-right font-mono text-gray-700">{s.reserved}</td>
                   <td className={`px-4 py-3 text-right font-mono font-bold ${s.lowStock ? 'text-brand-red' : 'text-status-success'}`}>
                     {s.available}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-xs text-gray-500">{s.reorderAt}</td>
+                  <td className="px-4 py-3 text-right font-mono text-xs text-gray-700">{s.reorderAt}</td>
                   <td className="px-4 py-3 text-center">
                     {(() => {
                       const wmsQty = wmsQtyMap.get(s.product.sku);
@@ -266,7 +267,7 @@ export default function StockPage() {
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono font-bold ${
                             wmsQty !== undefined && wmsQty > 0
                               ? 'bg-status-success-light text-status-success border border-status-success/30'
-                              : 'border border-gray-300 text-gray-500 hover:bg-gray-50'
+                              : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
                           }`}
                           title="Click for WMS detail"
                         >
@@ -323,11 +324,11 @@ export default function StockPage() {
         onClose={() => setWmsDetail(null)}
         title={`WMS On-Hand — ${wmsDetail?.sku ?? ''}`}
       >
-        {wmsLoading && <div className="text-center py-4 text-gray-400">{t('common.loading')}</div>}
+        {wmsLoading && <Spinner />}
         {wmsDetail && !wmsLoading && (
           <div className="space-y-3">
             {wmsDetail.data.length === 0 ? (
-              <div className="text-center py-6 text-gray-400 text-sm">
+              <div className="text-center py-6 text-gray-600 text-sm">
                 <span className="material-symbols-outlined !text-[36px] block mb-1 text-gray-300">inventory_2</span>
                 WMS: ไม่พบข้อมูลสต็อกสำหรับ {wmsDetail.sku}
               </div>
@@ -336,9 +337,9 @@ export default function StockPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left px-3 py-2 text-[10px] font-bold text-gray-500">Warehouse / Location</th>
-                      <th className="text-right px-3 py-2 text-[10px] font-bold text-gray-500">Qty</th>
-                      <th className="text-right px-3 py-2 text-[10px] font-bold text-gray-500">Updated</th>
+                      <th className="text-left px-3 py-2 text-[10px] font-bold text-gray-700">Warehouse / Location</th>
+                      <th className="text-right px-3 py-2 text-[10px] font-bold text-gray-700">Qty</th>
+                      <th className="text-right px-3 py-2 text-[10px] font-bold text-gray-700">Updated</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -346,7 +347,7 @@ export default function StockPage() {
                       <tr key={i} className="border-t border-gray-100">
                         <td className="px-3 py-2 font-mono text-xs">{level.warehouse}</td>
                         <td className="px-3 py-2 text-right font-mono font-bold text-brand-navy">{level.qty}</td>
-                        <td className="px-3 py-2 text-right text-[10px] text-gray-400">
+                        <td className="px-3 py-2 text-right text-[10px] text-gray-600">
                           {new Date(level.updatedAt).toLocaleTimeString('th-TH')}
                         </td>
                       </tr>
@@ -364,7 +365,7 @@ export default function StockPage() {
                 </table>
               </div>
             )}
-            <div className="text-[10px] text-gray-400 flex items-center gap-1">
+            <div className="text-[10px] text-gray-600 flex items-center gap-1">
               <span className="material-symbols-outlined !text-[12px]">info</span>
               ข้อมูล real-time จาก Toptier WMS MobileApi
             </div>
@@ -391,7 +392,7 @@ export default function StockPage() {
       >
         {editing && (
           <div className="space-y-3">
-            <div className="text-xs text-gray-500 bg-gray-50 rounded p-2">
+            <div className="text-xs text-gray-700 bg-gray-50 rounded p-2">
               {t('stock.currentSummary', { onHand: editing.onHand, reserved: editing.reserved, available: editing.available })}
             </div>
 

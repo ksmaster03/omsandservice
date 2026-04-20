@@ -6,9 +6,13 @@ import { login, getMe, logout, getMyTickets, getMyPmJobs, updateTicketStage, get
 import { useAuth } from './store/auth';
 import { useGpsTracker, openGoogleMapsNavigation } from './hooks/useGpsTracker';
 import { useTechSocket } from './hooks/useTechSocket';
+import { Toaster, toast } from 'sonner';
 import ServerStatus from './components/ServerStatus';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import FeedbackButton from './components/FeedbackButton';
+import ErrorBoundary from './components/ErrorBoundary';
+import { useOfflineQueue } from './hooks/useOfflineQueue';
+import * as offlineQueue from './lib/offlineQueue';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
@@ -114,14 +118,27 @@ const NEXT_STAGE: Record<string, { stage: string; labelKey: string } | null> = {
   CANCELLED: null,
 };
 
-function TicketCard({ ticket }: { ticket: TechTicket }) {
+function TicketCard({ ticket, gpsActive }: { ticket: TechTicket; gpsActive?: boolean }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const next = NEXT_STAGE[ticket.stage];
 
   const stageMut = useMutation({
     mutationFn: () => updateTicketStage(ticket.id, next!.stage),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-tickets'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-tickets'] });
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([80, 30, 80]);
+    },
+    onError: () => {
+      // Offline or network error: queue for later
+      if (!navigator.onLine) {
+        offlineQueue.enqueue({ ticketId: ticket.id, toStage: next!.stage });
+        toast.info('ออฟไลน์ — บันทึกไว้ในคิว จะซิงค์เมื่อกลับมาออนไลน์');
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([100, 40, 100]);
+      } else {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([200]);
+      }
+    },
   });
 
   function navigate() {
@@ -139,56 +156,77 @@ function TicketCard({ ticket }: { ticket: TechTicket }) {
     }
   }
 
+  const isActive = ['EN_ROUTE', 'ARRIVED', 'REPAIRING'].includes(ticket.stage);
+
   return (
     <div className="bg-white text-brand-navy rounded-brand-lg p-4 shadow-brand-md">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <div className="font-mono text-[11px] text-gray-500">{ticket.ticketNo}</div>
+          <div className="font-mono text-[11px] text-gray-600">{ticket.ticketNo}</div>
           <div className="font-display font-black text-lg">{ticket.customer.name}</div>
         </div>
-        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLOR[ticket.priority]}`}>
+        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${PRIORITY_COLOR[ticket.priority]}`}>
           {t(`ticket.priority.${ticket.priority}`)}
         </span>
       </div>
 
-      <div className="text-xs text-gray-600 mb-2">
+      {isActive && gpsActive && (
+        <div className="mb-2 inline-flex items-center gap-1.5 bg-status-success/10 text-status-success px-2.5 py-1 rounded-full text-[11px] font-bold">
+          <span className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse"></span>
+          <span>กำลังบันทึกตำแหน่ง</span>
+        </div>
+      )}
+
+      <div className="text-sm text-gray-700 mb-2">
         <div className="font-semibold">{t(`ticket.problem.${ticket.problemType}`)} · {ticket.asset.product.name}</div>
-        <div className="font-mono text-[10px]">{ticket.asset.serialNo}</div>
+        <div className="font-mono text-[11px] text-gray-600">{ticket.asset.serialNo}</div>
       </div>
 
       <div className="text-xs text-gray-700 bg-gray-50 rounded p-2 mb-3">{ticket.description}</div>
 
       {ticket.locationDetail && (
-        <div className="text-[11px] text-gray-500 mb-3">📍 {ticket.locationDetail}</div>
+        <div className="text-xs text-gray-700 mb-3">📍 {ticket.locationDetail}</div>
       )}
 
       <div className="grid grid-cols-2 gap-2 mb-2">
         <button
+          type="button"
           onClick={navigate}
           disabled={!ticket.locationLat && !ticket.customer.address}
-          className="py-2.5 bg-brand-navy text-white text-xs font-semibold rounded-brand disabled:opacity-40 flex items-center justify-center gap-1"
+          aria-label={t('ticket.navigate')}
+          className="py-3 min-h-[48px] bg-brand-navy text-white text-sm font-semibold rounded-brand disabled:opacity-40 flex items-center justify-center gap-1.5 active:scale-[.98] transition"
         >
-          <span className="material-symbols-outlined !text-[18px]" aria-hidden="true">directions</span>
+          <span className="material-symbols-outlined !text-[20px]" aria-hidden="true">directions</span>
           {t('ticket.navigate')}
         </button>
         <button
+          type="button"
           onClick={call}
           disabled={!ticket.customer.phone}
-          className="py-2.5 bg-status-success text-white text-xs font-semibold rounded-brand disabled:opacity-40 flex items-center justify-center gap-1"
+          aria-label={t('ticket.callCustomer')}
+          className="py-3 min-h-[48px] bg-status-success text-white text-sm font-semibold rounded-brand disabled:opacity-40 flex items-center justify-center gap-1.5 active:scale-[.98] transition"
         >
-          <span className="material-symbols-outlined !text-[18px]" aria-hidden="true">call</span>
+          <span className="material-symbols-outlined !text-[20px]" aria-hidden="true">call</span>
           {t('ticket.callCustomer')}
         </button>
       </div>
 
       {next && (
         <button
+          type="button"
           onClick={() => stageMut.mutate()}
           disabled={stageMut.isPending}
-          className="w-full py-3 bg-brand-red text-white font-bold rounded-brand disabled:opacity-50"
+          className="w-full py-4 min-h-[56px] bg-brand-red text-white text-base font-bold rounded-brand disabled:opacity-50 active:scale-[.98] transition flex items-center justify-center gap-2"
         >
+          {stageMut.isPending && <span className="material-symbols-outlined !text-[20px] animate-spin" aria-hidden="true">progress_activity</span>}
           → {t(`ticket.nextStage.${next.labelKey}`)}
         </button>
+      )}
+      {stageMut.isError && (
+        <div className="mt-2 text-xs text-brand-red bg-brand-red-light rounded-brand p-2 flex items-center gap-1.5" role="alert">
+          <span className="material-symbols-outlined !text-[16px]" aria-hidden="true">error</span>
+          อัปเดตไม่สำเร็จ ลองแตะอีกครั้ง
+        </div>
       )}
       {!next && ticket.stage === 'CLOSED' && (
         <div className="text-center text-xs font-semibold text-status-success py-2">{t('ticket.closed')}</div>
@@ -203,6 +241,7 @@ function HomeScreen() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [gpsEnabled, setGpsEnabled] = useState(false);
+  const [pendingOffline, online] = useOfflineQueue();
 
   // Real-time push via WebSocket — invalidates my-tickets on assignment/stage change
   useTechSocket(!!user);
@@ -277,6 +316,22 @@ function HomeScreen() {
           </button>
         </div>
         {gpsError && <div className="text-[10px] text-brand-red mt-1">{gpsError}</div>}
+
+        {(!online || pendingOffline > 0) && (
+          <div
+            role="status"
+            className={`mt-2 flex items-center gap-2 rounded-brand px-3 py-1.5 text-[11px] font-semibold ${
+              !online ? 'bg-brand-red/20 text-brand-red' : 'bg-brand-gold/20 text-brand-gold'
+            }`}
+          >
+            <span className="material-symbols-outlined !text-[16px]" aria-hidden="true">
+              {!online ? 'wifi_off' : 'cloud_sync'}
+            </span>
+            {!online
+              ? `ออฟไลน์ · การกระทำจะบันทึกในเครื่อง${pendingOffline > 0 ? ` (${pendingOffline} ในคิว)` : ''}`
+              : `กำลังซิงค์ ${pendingOffline} รายการที่ค้าง...`}
+          </div>
+        )}
       </header>
 
       <main className="p-4 space-y-3">
@@ -287,7 +342,9 @@ function HomeScreen() {
             {t('home.noTickets')}
           </div>
         )}
-        {tickets?.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)}
+        {tickets?.map((ticket) => (
+          <TicketCard key={ticket.id} ticket={ticket} gpsActive={gpsEnabled && !gpsError} />
+        ))}
 
         {/* PM Schedule section */}
         {pmJobs && pmJobs.length > 0 && (
@@ -367,11 +424,14 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppRoutes />
-        <FeedbackButton source="tech" />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AppRoutes />
+          <FeedbackButton source="tech" />
+          <Toaster position="top-center" richColors closeButton duration={4000} theme="dark" />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

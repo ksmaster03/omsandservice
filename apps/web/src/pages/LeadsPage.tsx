@@ -12,6 +12,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
@@ -79,9 +80,9 @@ function LeadCard({ lead, onMoveNext, onSelect }: { lead: Lead; onMoveNext: () =
         <div className="text-[10px] text-brand-navy font-mono mt-0.5">
           ฿{Number(lead.value).toLocaleString()}
         </div>
-        {lead.note && <div className="text-[10px] text-gray-500 mt-1 line-clamp-2">{lead.note}</div>}
+        {lead.note && <div className="text-[10px] text-gray-700 mt-1 line-clamp-2">{lead.note}</div>}
         {lead.expectedClose && (
-          <div className="text-[9px] text-gray-400 mt-1">
+          <div className="text-[9px] text-gray-600 mt-1">
             คาดปิด: {new Date(lead.expectedClose).toLocaleDateString('th-TH')}
           </div>
         )}
@@ -124,7 +125,7 @@ function StageColumn({ stage, items, onMoveNext, onSelect }: { stage: LeadStage;
             {items.length}
           </div>
         </div>
-        <div className="text-[10px] text-gray-500 mt-0.5">฿{stageTotal.toLocaleString()}</div>
+        <div className="text-[10px] text-gray-700 mt-0.5">฿{stageTotal.toLocaleString()}</div>
       </div>
 
       <div className="p-2 space-y-2 min-h-[300px] max-h-[600px] overflow-y-auto">
@@ -219,8 +220,12 @@ export default function LeadsPage() {
       }
       return { prev };
     },
-    onError: (_err, _vars, ctx) => {
+    onError: (err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['leads-pipeline'], ctx.prev);
+      const msg =
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ??
+        'ย้าย Lead ไม่สำเร็จ ลองใหม่อีกครั้ง';
+      toast.error(msg);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['leads-pipeline'] }),
   });
@@ -258,7 +263,7 @@ export default function LeadsPage() {
 
       <div className="p-6 overflow-x-auto">
         {isLoading ? (
-          <div className="text-center py-8 text-gray-400">กำลังโหลด...</div>
+          <div className="text-center py-8 text-gray-600">กำลังโหลด...</div>
         ) : (
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="grid grid-cols-5 gap-3 min-w-[1000px]">
@@ -302,35 +307,35 @@ export default function LeadsPage() {
           <div className="space-y-3 text-sm">
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <div className="text-gray-500">ลูกค้า</div>
+                <div className="text-gray-700">ลูกค้า</div>
                 <div className="font-semibold text-gray-900">{selectedLead.customer.name}</div>
               </div>
               <div>
-                <div className="text-gray-500">มูลค่า</div>
+                <div className="text-gray-700">มูลค่า</div>
                 <div className="font-semibold text-brand-navy font-mono">฿{Number(selectedLead.value).toLocaleString()}</div>
               </div>
               <div>
-                <div className="text-gray-500">สถานะ</div>
+                <div className="text-gray-700">สถานะ</div>
                 <div className="font-semibold">{stageLabel[selectedLead.stage]}</div>
               </div>
               <div>
-                <div className="text-gray-500">คาดปิดการขาย</div>
+                <div className="text-gray-700">คาดปิดการขาย</div>
                 <div className="font-semibold">{selectedLead.expectedClose ? new Date(selectedLead.expectedClose).toLocaleDateString('th-TH') : '—'}</div>
               </div>
               {selectedLead.owner && (
                 <div>
-                  <div className="text-gray-500">เจ้าของ Lead</div>
+                  <div className="text-gray-700">เจ้าของ Lead</div>
                   <div className="font-semibold">{selectedLead.owner.name}</div>
                 </div>
               )}
               <div>
-                <div className="text-gray-500">สร้างเมื่อ</div>
+                <div className="text-gray-700">สร้างเมื่อ</div>
                 <div className="font-semibold">{new Date(selectedLead.createdAt).toLocaleDateString('th-TH')}</div>
               </div>
             </div>
             {selectedLead.note && (
               <div className="bg-gray-50 rounded-brand p-3 text-xs text-gray-700 whitespace-pre-wrap">
-                <div className="text-[10px] text-gray-400 font-semibold mb-1">หมายเหตุ</div>
+                <div className="text-[10px] text-gray-600 font-semibold mb-1">หมายเหตุ</div>
                 {selectedLead.note}
               </div>
             )}
@@ -388,7 +393,7 @@ export default function LeadsPage() {
         }
       >
         <div className="space-y-3">
-          <div className="text-xs text-gray-500 bg-gray-50 rounded-brand p-2">
+          <div className="text-xs text-gray-700 bg-gray-50 rounded-brand p-2">
             บันทึกหมายเหตุ (ไม่บังคับ) เช่น เหตุผลที่เปลี่ยนสถานะ, นัดหมายถัดไป
           </div>
           <textarea

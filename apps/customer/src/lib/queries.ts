@@ -116,12 +116,29 @@ export async function getTicket(id: string) {
   return res.data.data as TicketDetail;
 }
 
+export interface TicketPhotoUpload {
+  s3Key: string;
+  url: string;
+  size: number;
+  contentType: string;
+}
+
+export async function uploadTicketPhoto(file: File): Promise<TicketPhotoUpload> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await api.post<{ ok: boolean; data: TicketPhotoUpload }>('/customer/tickets/upload', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data.data;
+}
+
 export async function createTicket(payload: {
   assetId: string;
   problemType: ProblemType;
   priority: Priority;
   description: string;
   locationDetail?: string;
+  photoKeys?: Array<{ s3Key: string; size: number }>;
 }) {
   const res = await api.post('/customer/tickets', payload);
   return res.data.data as Ticket;

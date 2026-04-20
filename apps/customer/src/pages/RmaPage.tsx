@@ -103,9 +103,9 @@ export default function RmaPage() {
           {lang === 'th' ? 'เปิดเรื่องคืนสินค้า' : 'Request a return'}
         </button>
 
-        {isLoading && <div className="text-center py-8 text-gray-400">{t('common.loading')}</div>}
+        {isLoading && <div className="text-center py-8 text-gray-600">{t('common.loading')}</div>}
         {!isLoading && rmas?.length === 0 && (
-          <div className="text-center py-8 text-gray-400 text-sm">
+          <div className="text-center py-8 text-gray-600 text-sm">
             {lang === 'th' ? 'ยังไม่เคยแจ้งคืนสินค้า' : 'No return requests yet'}
           </div>
         )}
@@ -118,11 +118,11 @@ export default function RmaPage() {
               </span>
             </div>
             <div className="text-sm font-semibold text-gray-900">{r.asset.product.name}</div>
-            <div className="text-[10px] text-gray-500 font-mono">{r.asset.serialNo}</div>
+            <div className="text-[10px] text-gray-700 font-mono">{r.asset.serialNo}</div>
             <div className="text-xs text-gray-600 mt-1">
               {REASON_LABELS[lang]?.[r.reason] ?? r.reason} — {r.description.slice(0, 80)}
             </div>
-            <div className="text-[10px] text-gray-400 mt-1">
+            <div className="text-[10px] text-gray-600 mt-1">
               {new Date(r.createdAt).toLocaleDateString(lang === 'th' ? 'th-TH' : 'en-US')}
             </div>
           </div>

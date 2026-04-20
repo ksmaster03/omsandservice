@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import PageHeader from '../components/PageHeader';
+import TableSkeleton from '../components/TableSkeleton';
+import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
@@ -23,6 +25,32 @@ const PRIORITY_COLOR: Record<ServiceTicket['priority'], string> = {
   URGENT: 'bg-brand-red text-white',
   NORMAL: 'bg-status-warning text-brand-navy',
   LOW: 'bg-status-success text-white',
+};
+
+const PRIORITY_ICON: Record<ServiceTicket['priority'], string> = {
+  URGENT: 'priority_high',
+  NORMAL: 'schedule',
+  LOW: 'low_priority',
+};
+
+const STAGE_ICON: Record<TicketStage, string> = {
+  RECEIVED: 'inbox',
+  ASSIGNED: 'person_pin',
+  EN_ROUTE: 'directions_car',
+  ARRIVED: 'place',
+  REPAIRING: 'build',
+  CLOSED: 'check_circle',
+  CANCELLED: 'cancel',
+};
+
+const STAGE_COLOR: Record<TicketStage, string> = {
+  RECEIVED: 'bg-status-info-light text-status-info',
+  ASSIGNED: 'bg-status-warning-light text-brand-gold-text',
+  EN_ROUTE: 'bg-status-warning-light text-brand-gold-text',
+  ARRIVED: 'bg-status-info-light text-status-info',
+  REPAIRING: 'bg-brand-red/10 text-brand-red',
+  CLOSED: 'bg-status-success-light text-status-success',
+  CANCELLED: 'bg-gray-200 text-gray-700',
 };
 
 export default function ServiceTicketsPage() {
@@ -144,7 +172,7 @@ export default function ServiceTicketsPage() {
         <div className="mb-4 flex gap-1 bg-gray-100 rounded-brand p-1 w-fit flex-wrap">
           <button
             onClick={() => setStageFilter('')}
-            className={`px-3 py-1 rounded text-xs font-semibold ${!stageFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+            className={`px-3 py-1 rounded text-xs font-semibold ${!stageFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
           >
             {t('common.all')}
           </button>
@@ -152,7 +180,7 @@ export default function ServiceTicketsPage() {
             <button
               key={s}
               onClick={() => setStageFilter(s)}
-              className={`px-3 py-1 rounded text-xs font-semibold ${stageFilter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'}`}
+              className={`px-3 py-1 rounded text-xs font-semibold ${stageFilter === s ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'}`}
             >
               {STAGE_LABEL[s]}
             </button>
@@ -161,41 +189,45 @@ export default function ServiceTicketsPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('so.colNo')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.customer')}</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('tickets.problemLabel')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('tickets.fieldPriority')}</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">{t('common.status')}</th>
-                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500"></th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('so.colNo')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('common.customer')}</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('tickets.problemLabel')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('tickets.fieldPriority')}</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">{t('common.status')}</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700"></th>
               </tr>
             </thead>
             <tbody>
-              {list.isLoading && (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400">{t('common.loading')}</td></tr>
-              )}
+              {list.isLoading && <TableSkeleton rows={8} columns={6} />}
               {!list.isLoading && list.data?.items.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400">{t('common.noData')}</td></tr>
+                <tr>
+                  <td colSpan={6} className="p-0">
+                    <EmptyState icon="confirmation_number" title={t('common.noData')} variant="compact" />
+                  </td>
+                </tr>
               )}
               {list.data?.items.map((ticket: ServiceTicket) => (
                 <tr key={ticket.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-brand-navy">{ticket.ticketNo}</td>
                   <td className="px-4 py-3">
                     <div className="text-sm font-semibold text-gray-900">{ticket.customer.name}</div>
-                    <div className="text-[10px] text-gray-500 font-mono">{ticket.asset.serialNo}</div>
+                    <div className="text-[10px] text-gray-700 font-mono">{ticket.asset.serialNo}</div>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-700">
                     <div className="font-semibold">{PROBLEM_LABEL[ticket.problemType]}</div>
-                    <div className="text-[10px] text-gray-500 line-clamp-1">{ticket.description}</div>
+                    <div className="text-[10px] text-gray-700 line-clamp-1">{ticket.description}</div>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLOR[ticket.priority]}`}>
+                    <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLOR[ticket.priority]}`}>
+                      <span className="material-symbols-outlined !text-[12px]" aria-hidden="true">{PRIORITY_ICON[ticket.priority]}</span>
                       {PRIORITY_LABEL[ticket.priority]}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STAGE_COLOR[ticket.stage] ?? 'bg-gray-100 text-gray-700'}`}>
+                      <span className="material-symbols-outlined !text-[13px]" aria-hidden="true">{STAGE_ICON[ticket.stage] ?? 'circle'}</span>
                       {STAGE_LABEL[ticket.stage]}
                     </span>
                   </td>
@@ -217,7 +249,7 @@ export default function ServiceTicketsPage() {
         onClose={() => setSelectedId(null)}
         title={detail.data?.ticketNo ?? t('tickets.title')}
       >
-        {detail.isLoading && <div className="text-gray-400 text-sm py-4">{t('common.loading')}</div>}
+        {detail.isLoading && <div className="text-gray-600 text-sm py-4">{t('common.loading')}</div>}
         {detail.data && (
           <div className="space-y-4">
             <div className="text-xs">
@@ -235,8 +267,8 @@ export default function ServiceTicketsPage() {
                     <div className="w-2 h-2 rounded-full bg-brand-red mt-1.5 flex-shrink-0"></div>
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">{STAGE_LABEL[e.stage]}</div>
-                      {e.note && <div className="text-gray-500 text-[11px]">{e.note}</div>}
-                      <div className="text-[10px] text-gray-400">
+                      {e.note && <div className="text-gray-700 text-[11px]">{e.note}</div>}
+                      <div className="text-[10px] text-gray-600">
                         {new Date(e.createdAt).toLocaleString('th-TH')}
                         {e.actor && ` · ${e.actor.name}`}
                       </div>

@@ -84,7 +84,7 @@ export default function UsersPage() {
       <div className="p-6">
         <div className="mb-4 flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 max-w-md">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-400">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] text-gray-600">
               search
             </span>
             <input
@@ -99,7 +99,7 @@ export default function UsersPage() {
             <button
               onClick={() => setRoleFilter('')}
               className={`px-3 py-1 rounded text-xs font-semibold ${
-                !roleFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'
+                !roleFilter ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'
               }`}
             >
               ทั้งหมด
@@ -109,7 +109,7 @@ export default function UsersPage() {
                 key={r}
                 onClick={() => setRoleFilter(r)}
                 className={`px-3 py-1 rounded text-xs font-semibold ${
-                  roleFilter === r ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-500'
+                  roleFilter === r ? 'bg-white shadow-brand-sm text-brand-navy' : 'text-gray-700'
                 }`}
               >
                 {roleLabel[r]}
@@ -120,19 +120,19 @@ export default function UsersPage() {
 
         <div className="bg-white rounded-brand-lg shadow-brand-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">ชื่อ</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">อีเมล</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">เบอร์</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">Role</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">สถานะ</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">ชื่อ</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">อีเมล</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">เบอร์</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">Role</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-700">สถานะ</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">กำลังโหลด...</td>
+                  <td colSpan={5} className="text-center py-8 text-gray-600">กำลังโหลด...</td>
                 </tr>
               )}
               {data?.items.map((u) => (
@@ -149,7 +149,7 @@ export default function UsersPage() {
                     {u.active ? (
                       <span className="text-[11px] font-semibold text-status-success">● ใช้งาน</span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-gray-400">● ปิด</span>
+                      <span className="text-[11px] font-semibold text-gray-600">● ปิด</span>
                     )}
                   </td>
                 </tr>

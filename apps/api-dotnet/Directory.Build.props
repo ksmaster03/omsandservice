@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <RootNamespace>TD.OmsService</RootNamespace>
+    <Company>Toptier Digital</Company>
+    <Product>TD.Order_And_Service</Product>
+    <Version>3.0.0</Version>
+  </PropertyGroup>
+</Project>

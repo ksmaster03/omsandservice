@@ -1,0 +1,62 @@
+name: oms-dotnet-stack
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: oms_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api-node:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/oms_dev
+      PORT: "4100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4100:4100"
+
+  api-dotnet:
+    build:
+      context: .
+      dockerfile: src/TD.OmsService.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:4111
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=oms_dev;Username=postgres;Password=postgres"
+      Jwt__Secret: "DEV_ONLY_SECRET_REPLACE_IN_PROD_______________"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4111:4111"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      - api-node
+      - api-dotnet
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

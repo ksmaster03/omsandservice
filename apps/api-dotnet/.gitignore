@@ -1,0 +1,23 @@
+# .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/launch.json
+*.swp
+
+# Local secrets (use dotnet user-secrets for development)
+*.development.local.json
+appsettings.*.local.json
+
+# EF migrations bundles & local db
+*.db
+*.db-journal
+
+# Uploads
+uploads/
+
+# Logs
+logs/
+*.log

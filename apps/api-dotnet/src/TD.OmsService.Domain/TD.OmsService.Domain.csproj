@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>TD.OmsService.Domain</AssemblyName>
+    <RootNamespace>TD.OmsService.Domain</RootNamespace>
+  </PropertyGroup>
+</Project>

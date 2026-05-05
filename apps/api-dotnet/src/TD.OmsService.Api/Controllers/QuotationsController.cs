@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TD.OmsService.Api.Common;
 using TD.OmsService.Application.Common;
+using TD.OmsService.Application.Pdf;
 using TD.OmsService.Application.Quotations;
 
 namespace TD.OmsService.Api.Controllers;
@@ -9,7 +10,7 @@ namespace TD.OmsService.Api.Controllers;
 [ApiController]
 [Route("api/v1/internal/quotations")]
 [Authorize(Policy = "Staff")]
-public sealed class QuotationsController(IQuotationService service) : ControllerBase
+public sealed class QuotationsController(IQuotationService service, IQuotePdfGenerator pdf) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<QuotationListItem>>>> List(
@@ -38,5 +39,19 @@ public sealed class QuotationsController(IQuotationService service) : Controller
         return updated is null
             ? NotFound(ApiResponse<QuotationDto>.Failure("NOT_FOUND", $"Quotation {id} not found"))
             : Ok(ApiResponse<QuotationDto>.Success(updated));
+    }
+
+    /// <summary>
+    /// Render the quotation PDF inline. Replaces the puppeteer-based endpoint
+    /// in Node — same QuotePdfInput shape, ported via QuestPDF.
+    /// </summary>
+    [HttpGet("{id}/pdf")]
+    [Produces("application/pdf")]
+    public async Task<IActionResult> Pdf(string id, CancellationToken ct)
+    {
+        var input = await service.BuildPdfInputAsync(id, ct);
+        if (input is null) return NotFound();
+        var bytes = pdf.Render(input);
+        return File(bytes, "application/pdf", $"{input.QuoteNo}.pdf");
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TD.OmsService.Application.Common;
+using TD.OmsService.Application.Pdf;
 using TD.OmsService.Application.Quotations;
 using TD.OmsService.Infrastructure.Persistence;
 using TD.OmsService.Infrastructure.Persistence.Generated;
@@ -40,6 +41,45 @@ public sealed class QuotationService(AppDbContext db) : IQuotationService
         q.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return Map(q);
+    }
+
+    public async Task<QuotePdfInput?> BuildPdfInputAsync(string id, CancellationToken ct)
+    {
+        var q = await db.Quotations.AsNoTracking()
+            .Where(x => x.Id == id)
+            .Include(x => x.Customer)
+            .Include(x => x.Sales)
+            .Include(x => x.QuotationItems).ThenInclude(it => it.Product)
+            .FirstOrDefaultAsync(ct);
+        if (q is null) return null;
+
+        var subtotal = q.Subtotal;
+        var vatRate = subtotal == 0 ? 0m : Math.Round(q.Vat * 100 / subtotal, 0);
+        var items = q.QuotationItems
+            .Select(it => new QuotePdfLineItem(
+                it.Product.Name,
+                it.Product.Sku,
+                it.Qty,
+                it.UnitPrice,
+                it.Discount,
+                (it.UnitPrice * it.Qty) - it.Discount))
+            .ToList();
+
+        return new QuotePdfInput(
+            QuoteNo: q.QuoteNo,
+            CreatedAt: q.CreatedAt,
+            ValidUntil: q.ValidUntil,
+            Status: q.Status.ToString(),
+            Customer: new QuotePdfCustomer(
+                q.Customer.Name, q.Customer.TaxId, q.Customer.Address,
+                q.Customer.ContactName, q.Customer.Phone, q.Customer.Email),
+            Sales: new QuotePdfSales(q.Sales.Name, q.Sales.Email),
+            Items: items,
+            Subtotal: q.Subtotal,
+            Discount: q.Discount,
+            VatRate: vatRate,
+            Vat: q.Vat,
+            Total: q.Total);
     }
 
     private static QuotationDto Map(Quotation q) => new(

@@ -40,4 +40,38 @@ public sealed class CustomerAuthController(IAuthService auth) : ControllerBase
             ? Unauthorized(ApiResponse<CustomerLoginResponse>.Failure("INVALID_OTP", "OTP code is invalid or expired"))
             : Ok(ApiResponse<CustomerLoginResponse>.Success(result));
     }
+
+    [HttpPost("google")]
+    public async Task<ActionResult<ApiResponse<CustomerLoginResponse>>> Google(
+        [FromBody] CustomerGoogleLoginRequest req, CancellationToken ct)
+    {
+        try
+        {
+            var result = await auth.LoginWithGoogleAsync(req, ct);
+            return result is null
+                ? Unauthorized(ApiResponse<CustomerLoginResponse>.Failure("NOT_REGISTERED", "Email is not registered as a customer. Please contact sales."))
+                : Ok(ApiResponse<CustomerLoginResponse>.Success(result));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(ApiResponse<CustomerLoginResponse>.Failure("INVALID_GOOGLE_TOKEN", ex.Message));
+        }
+    }
+
+    [HttpPost("line")]
+    public async Task<ActionResult<ApiResponse<CustomerLoginResponse>>> Line(
+        [FromBody] CustomerLineLoginRequest req, CancellationToken ct)
+    {
+        try
+        {
+            var result = await auth.LoginWithLineAsync(req, ct);
+            return result is null
+                ? Unauthorized(ApiResponse<CustomerLoginResponse>.Failure("NOT_REGISTERED", "LINE account not linked to a customer. Please contact sales."))
+                : Ok(ApiResponse<CustomerLoginResponse>.Success(result));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(ApiResponse<CustomerLoginResponse>.Failure("INVALID_LINE_TOKEN", ex.Message));
+        }
+    }
 }

@@ -19,6 +19,11 @@ using TD.OmsService.Infrastructure.Persistence;
 // otherwise reject DateTime.UtcNow against non-timestamptz columns.
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+// QuestPDF community license — required before any Document.Create() call.
+// We're under the community threshold (free for orgs with annual revenue
+// < $1M USD). Buying a paid license later only changes this line.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── Serilog ─────────────────────────────────────────────────

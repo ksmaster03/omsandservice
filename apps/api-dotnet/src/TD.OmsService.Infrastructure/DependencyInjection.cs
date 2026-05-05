@@ -7,6 +7,7 @@ using TD.OmsService.Application.Customers;
 using TD.OmsService.Application.CustomerPortal;
 using TD.OmsService.Application.Feedbacks;
 using TD.OmsService.Application.Leads;
+using TD.OmsService.Application.Pdf;
 using TD.OmsService.Application.PmSchedules;
 using TD.OmsService.Application.Products;
 using TD.OmsService.Application.Quotations;
@@ -26,6 +27,7 @@ using TD.OmsService.Infrastructure.Customers;
 using TD.OmsService.Infrastructure.CustomerPortal;
 using TD.OmsService.Infrastructure.Feedbacks;
 using TD.OmsService.Infrastructure.Leads;
+using TD.OmsService.Infrastructure.Pdf;
 using TD.OmsService.Infrastructure.PmSchedules;
 using TD.OmsService.Infrastructure.Products;
 using TD.OmsService.Infrastructure.Quotations;
@@ -51,7 +53,10 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddHttpClient();
+        services.AddScoped<IExternalAuthClient, ExternalAuthClient>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddSingleton<IQuotePdfGenerator, QuestPdfQuoteGenerator>();
 
         // ── Phase 2: Master Data ──
         services.AddScoped<ICustomerService, CustomerService>();

@@ -80,6 +80,10 @@ builder.Services.AddValidatorsFromAssemblyContaining<ApplicationAssemblyMarker>(
 // ─── SignalR (replaces socket.io for Tech PWA) ───────────────
 builder.Services.AddSignalR();
 
+// ─── HttpContext + CurrentUser accessor ──────────────────────
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<TD.OmsService.Application.Abstractions.ICurrentUser, TD.OmsService.Api.Auth.CurrentUser>();
+
 // ─── Application & Infrastructure ────────────────────────────
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);

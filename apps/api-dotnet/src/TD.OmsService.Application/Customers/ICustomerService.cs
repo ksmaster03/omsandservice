@@ -1,3 +1,5 @@
+using TD.OmsService.Application.Common;
+
 namespace TD.OmsService.Application.Customers;
 
 public interface ICustomerService

@@ -3,9 +3,13 @@ using Microsoft.Extensions.DependencyInjection;
 using TD.OmsService.Application.Abstractions;
 using TD.OmsService.Application.Auth;
 using TD.OmsService.Application.Customers;
+using TD.OmsService.Application.Products;
+using TD.OmsService.Application.Users;
 using TD.OmsService.Infrastructure.Auth;
 using TD.OmsService.Infrastructure.Customers;
+using TD.OmsService.Infrastructure.Products;
 using TD.OmsService.Infrastructure.Storage;
+using TD.OmsService.Infrastructure.Users;
 
 namespace TD.OmsService.Infrastructure;
 
@@ -21,8 +25,8 @@ public static class DependencyInjection
 
         // ── Phase 2: Master Data ──
         services.AddScoped<ICustomerService, CustomerService>();
-        // services.AddScoped<IProductService, ProductService>();
-        // services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IUserService, UserService>();
 
         return services;
     }

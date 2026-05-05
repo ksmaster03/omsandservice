@@ -47,5 +47,3 @@ public sealed record UpdateCustomerRequest(
     bool Active);
 
 public sealed record CustomerListItem(string Id, string Name, CustomerType Type, string? Phone, string? Email, bool Active);
-
-public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);

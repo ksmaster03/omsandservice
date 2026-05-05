@@ -6,12 +6,6 @@ using TD.OmsService.Infrastructure.Persistence.Generated;
 
 namespace TD.OmsService.Infrastructure.Customers;
 
-/// <summary>
-/// Phase 2 reference: Customer CRUD against the scaffolded EF model. The
-/// scaffold skips the Postgres-native enum column `Customer.type`, so this
-/// service does not currently expose CustomerType — it will land alongside
-/// Phase 3 work via Npgsql NpgsqlDataSourceBuilder.MapEnum&lt;CustomerType&gt;().
-/// </summary>
 public sealed class CustomerService(AppDbContext db) : ICustomerService
 {
     public async Task<PagedResult<CustomerListItem>> ListAsync(int page, int pageSize, string? search, CancellationToken ct)
@@ -34,7 +28,7 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
             .OrderBy(c => c.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => new CustomerListItem(c.Id, c.Name, c.Phone, c.Email, c.Active))
+            .Select(c => new CustomerListItem(c.Id, c.Name, c.Type, c.Phone, c.Email, c.Active))
             .ToListAsync(ct);
 
         return new PagedResult<CustomerListItem>(items, total, page, pageSize);
@@ -52,6 +46,7 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
         {
             Id = Guid.NewGuid().ToString(),
             Name = req.Name,
+            Type = req.Type,
             WmsCode = req.WmsCode,
             AlternateName = req.AlternateName,
             TaxId = req.TaxId,
@@ -75,6 +70,7 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
         var entity = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
         if (entity is null) return null;
         entity.Name = req.Name;
+        entity.Type = req.Type;
         entity.WmsCode = req.WmsCode;
         entity.AlternateName = req.AlternateName;
         entity.TaxId = req.TaxId;
@@ -101,6 +97,6 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
     }
 
     private static CustomerDto Map(Customer c) => new(
-        c.Id, c.WmsCode, c.Name, c.AlternateName, c.TaxId, c.ContactName,
+        c.Id, c.WmsCode, c.Name, c.AlternateName, c.TaxId, c.Type, c.ContactName,
         c.Phone, c.Email, c.Address, c.Lat, c.Lng, c.Active, c.CreatedAt, c.UpdatedAt);
 }

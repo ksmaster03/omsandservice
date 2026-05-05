@@ -30,4 +30,13 @@ public sealed class SalesOrdersController(ISalesOrderService service) : Controll
             ? NotFound(ApiResponse<SalesOrderDto>.Failure("NOT_FOUND", $"SalesOrder {id} not found"))
             : Ok(ApiResponse<SalesOrderDto>.Success(so));
     }
+
+    [HttpPatch("{id}/status")]
+    public async Task<ActionResult<ApiResponse<SalesOrderDto>>> UpdateStatus(string id, [FromBody] UpdateSoStatusRequest req, CancellationToken ct)
+    {
+        var updated = await service.UpdateStatusAsync(id, req, ct);
+        return updated is null
+            ? NotFound(ApiResponse<SalesOrderDto>.Failure("NOT_FOUND", $"SalesOrder {id} not found"))
+            : Ok(ApiResponse<SalesOrderDto>.Success(updated));
+    }
 }

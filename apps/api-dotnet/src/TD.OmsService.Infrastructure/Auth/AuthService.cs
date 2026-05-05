@@ -23,10 +23,9 @@ public sealed class AuthService(
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == req.Email && u.Active, ct);
         if (user is null) return null;
         if (!hasher.Verify(req.Password, user.PasswordHash)) return null;
-        // TODO: Resolve actual role once Postgres enum is mapped.
-        const string roleStub = "STAFF";
-        var token = jwt.CreateStaffToken(user.Id, user.Email, roleStub);
-        return new LoginResponse(token, new UserSummary(user.Id, user.Email, user.Name, roleStub));
+        var role = user.Role.ToString();
+        var token = jwt.CreateStaffToken(user.Id, user.Email, role);
+        return new LoginResponse(token, new UserSummary(user.Id, user.Email, user.Name, role));
     }
 
     public Task RequestCustomerOtpAsync(CustomerOtpRequest req, CancellationToken ct)

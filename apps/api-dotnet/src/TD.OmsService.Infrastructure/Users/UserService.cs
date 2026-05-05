@@ -24,7 +24,7 @@ public sealed class UserService(AppDbContext db, IPasswordHasher hasher) : IUser
             .OrderBy(u => u.Name)
             .Skip((q.SafePage - 1) * q.SafePageSize)
             .Take(q.SafePageSize)
-            .Select(u => new UserDto(u.Id, u.Email, u.Name, u.Phone, (IReadOnlyList<string>)(u.Skills ?? new List<string>()), u.Active, u.CreatedAt, u.UpdatedAt))
+            .Select(u => new UserDto(u.Id, u.Email, u.Name, u.Phone, u.Role, (IReadOnlyList<string>)(u.Skills ?? new List<string>()), u.Active, u.CreatedAt, u.UpdatedAt))
             .ToListAsync(ct);
         return new PagedResult<UserDto>(items, total, q.SafePage, q.SafePageSize);
     }
@@ -43,6 +43,7 @@ public sealed class UserService(AppDbContext db, IPasswordHasher hasher) : IUser
             Email = req.Email.ToLowerInvariant(),
             Name = req.Name,
             Phone = req.Phone,
+            Role = req.Role,
             PasswordHash = hasher.Hash(req.Password),
             Skills = req.Skills?.ToList() ?? new List<string>(),
             Active = true,
@@ -60,6 +61,7 @@ public sealed class UserService(AppDbContext db, IPasswordHasher hasher) : IUser
         if (entity is null) return null;
         entity.Email = req.Email.ToLowerInvariant();
         entity.Name = req.Name;
+        entity.Role = req.Role;
         entity.Phone = req.Phone;
         entity.Skills = req.Skills?.ToList() ?? entity.Skills;
         entity.Active = req.Active;
@@ -90,6 +92,6 @@ public sealed class UserService(AppDbContext db, IPasswordHasher hasher) : IUser
     }
 
     private static UserDto Map(User u) => new(
-        u.Id, u.Email, u.Name, u.Phone, u.Skills ?? new List<string>(),
+        u.Id, u.Email, u.Name, u.Phone, u.Role, u.Skills ?? new List<string>(),
         u.Active, u.CreatedAt, u.UpdatedAt);
 }

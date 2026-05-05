@@ -7,6 +7,7 @@ using TD.OmsService.Application.Common;
 using TD.OmsService.Application.Customers;
 using TD.OmsService.Application.Products;
 using TD.OmsService.Application.Users;
+using TD.OmsService.Domain.Common;
 using Xunit;
 
 namespace TD.OmsService.Tests;
@@ -88,7 +89,7 @@ public sealed class Phase2ParityTests : IClassFixture<WebApplicationFactory<Prog
 
         var name = $"PARITY_TEST_{Guid.NewGuid():N}";
         var created = await service.CreateAsync(
-            new CreateCustomerRequest(name, null, null, null, null, "0900000000", "parity@example.com", null, null, null),
+            new CreateCustomerRequest(name, CustomerType.CORPORATE, null, null, null, null, "0900000000", "parity@example.com", null, null, null),
             CancellationToken.None);
         created.Id.Should().NotBeNullOrEmpty();
         created.Name.Should().Be(name);

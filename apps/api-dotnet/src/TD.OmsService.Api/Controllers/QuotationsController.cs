@@ -30,4 +30,13 @@ public sealed class QuotationsController(IQuotationService service) : Controller
             ? NotFound(ApiResponse<QuotationDto>.Failure("NOT_FOUND", $"Quotation {id} not found"))
             : Ok(ApiResponse<QuotationDto>.Success(q));
     }
+
+    [HttpPatch("{id}/status")]
+    public async Task<ActionResult<ApiResponse<QuotationDto>>> UpdateStatus(string id, [FromBody] UpdateQuoteStatusRequest req, CancellationToken ct)
+    {
+        var updated = await service.UpdateStatusAsync(id, req, ct);
+        return updated is null
+            ? NotFound(ApiResponse<QuotationDto>.Failure("NOT_FOUND", $"Quotation {id} not found"))
+            : Ok(ApiResponse<QuotationDto>.Success(updated));
+    }
 }

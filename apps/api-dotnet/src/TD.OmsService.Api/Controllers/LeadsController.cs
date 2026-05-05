@@ -30,4 +30,20 @@ public sealed class LeadsController(ILeadService service) : ControllerBase
             ? NotFound(ApiResponse<LeadDto>.Failure("NOT_FOUND", $"Lead {id} not found"))
             : Ok(ApiResponse<LeadDto>.Success(lead));
     }
+
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<LeadDto>>> Create([FromBody] CreateLeadRequest req, CancellationToken ct)
+    {
+        var created = await service.CreateAsync(req, ct);
+        return CreatedAtAction(nameof(Get), new { id = created.Id }, ApiResponse<LeadDto>.Success(created));
+    }
+
+    [HttpPatch("{id}/stage")]
+    public async Task<ActionResult<ApiResponse<LeadDto>>> UpdateStage(string id, [FromBody] UpdateLeadStageRequest req, CancellationToken ct)
+    {
+        var updated = await service.UpdateStageAsync(id, req, ct);
+        return updated is null
+            ? NotFound(ApiResponse<LeadDto>.Failure("NOT_FOUND", $"Lead {id} not found"))
+            : Ok(ApiResponse<LeadDto>.Success(updated));
+    }
 }

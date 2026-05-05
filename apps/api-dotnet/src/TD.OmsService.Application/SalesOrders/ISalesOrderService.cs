@@ -6,4 +6,5 @@ public interface ISalesOrderService
 {
     Task<PagedResult<SalesOrderListItem>> ListAsync(PageQuery q, CancellationToken ct);
     Task<SalesOrderDto?> GetAsync(string id, CancellationToken ct);
+    Task<SalesOrderDto?> UpdateStatusAsync(string id, UpdateSoStatusRequest req, CancellationToken ct);
 }

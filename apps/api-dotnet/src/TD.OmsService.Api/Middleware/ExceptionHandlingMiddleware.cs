@@ -13,6 +13,12 @@ public sealed class ExceptionHandlingMiddleware(
     ILogger<ExceptionHandlingMiddleware> logger,
     IHostEnvironment env)
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+
     public async Task InvokeAsync(HttpContext ctx)
     {
         try
@@ -46,9 +52,6 @@ public sealed class ExceptionHandlingMiddleware(
         ctx.Response.StatusCode = status;
         ctx.Response.ContentType = "application/json; charset=utf-8";
         var payload = new ApiResponse<object>(false, null, new ApiError(code, message, details));
-        await ctx.Response.WriteAsync(JsonSerializer.Serialize(payload, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        }));
+        await ctx.Response.WriteAsync(JsonSerializer.Serialize(payload, JsonOpts));
     }
 }

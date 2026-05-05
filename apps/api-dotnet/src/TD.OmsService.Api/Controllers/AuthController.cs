@@ -24,7 +24,7 @@ public sealed class AuthController(IAuthService auth) : ControllerBase
 public sealed class CustomerAuthController(IAuthService auth) : ControllerBase
 {
     [HttpPost("otp/request")]
-    public async Task<ActionResult<ApiResponse<object>>> Request(
+    public async Task<ActionResult<ApiResponse<object>>> RequestOtp(
         [FromBody] CustomerOtpRequest req, CancellationToken ct)
     {
         await auth.RequestCustomerOtpAsync(req, ct);

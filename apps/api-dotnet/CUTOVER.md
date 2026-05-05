@@ -98,18 +98,56 @@ or do a `kubectl rollout restart` in prod.
 
 ## What's NOT migrated (and why)
 
-All originally-Node features are now ported. Remaining items are productionisation
-concerns rather than feature gaps:
+All Node features are ported, including productionisation concerns that were
+previously deferred:
 
-- **S3 backend for `IFileStorageService`**: A `LocalFileStorageService` is the
-  default. Swap to S3 by adding `S3FileStorageService` (AWSSDK.S3) and
-  registering it in `Infrastructure/DependencyInjection.cs` for the prod env.
-- **WMS LiveAdapter auth flow**: `LiveWmsAdapter` does plain bearer-key auth
-  via `Wms:ApiKey`. The 3-step Toptier WMS auth flow (`GetKey` → `UserLogin`
-  → `apiKey`) from `apps/api/src/adapters/wms/wms-client.ts` is not ported —
-  current setup assumes a long-lived API key. Re-port the cookie-based session
-  flow if your WMS instance requires it.
 - **Email notifications via SMTP**: Not in the Node API either — would be net new.
+
+## Storage backend switch (S3)
+
+`IFileStorageService` has two implementations:
+
+| Backend | Class | When |
+|---|---|---|
+| Local disk | `LocalFileStorageService` | Default. Files saved to `uploads/{kind}/{entityId}/{uuid}.{ext}`. Suitable for dev. |
+| AWS S3 | `S3FileStorageService` | Selected via `Storage:Backend=s3`. Uses AWSSDK.S3 default credential chain. |
+
+Production config example:
+
+```json
+{
+  "Storage": {
+    "Backend": "s3",
+    "S3": {
+      "Bucket": "td-oms-uploads-prod",
+      "Region": "ap-southeast-7",
+      "UrlPrefix": "https://cdn.td-oms.example.com",
+      "CannedAcl": "private"
+    }
+  }
+}
+```
+
+Credentials come from AWS SDK default chain (env, ~/.aws, EC2/ECS instance profile).
+No secrets in config. Server-side AES-256 encryption enforced per object.
+
+## WMS authentication
+
+`LiveWmsAdapter` runs the same 3-step Toptier WMS auth as the Node client:
+
+1. `GET /api/AboutApi/GetKey?username=X` → text body = `apiKey`
+2. `POST /api/Authorization/UserLogin?userId=X&password=Y&deviceName=ToptierOSM&ip=server` (with `?apikey=X`) → JSON `{ AuthSid }`
+3. All subsequent calls append `?apikey=X` (NOT `_apikey` — Toptier docs are wrong)
+
+On 401 or response body containing `Invalid API-key`, state is reset and
+auth re-runs once before failing.
+
+Credentials lookup order (each request):
+1. `Setting` table rows: `wms.baseUrl`, `wms.username`, `wms.password`
+2. Fallback to IConfiguration: `Wms:BaseUrl`, `Wms:Username`, `Wms:Password`
+
+`LiveWmsAdapter` is a singleton — `apiKey` and `authSid` persist across
+requests, gated by `SemaphoreSlim` for thread safety.
 
 ## Operational runbook
 

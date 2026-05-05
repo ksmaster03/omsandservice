@@ -52,7 +52,16 @@ public static class DependencyInjection
         // ── Cross-cutting (Phase 1) ──
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IFileStorageService, LocalFileStorageService>();
+
+        // Storage backend — local disk (dev/default) or S3 (prod). Switching
+        // backends requires nothing in app code besides flipping Storage:Backend
+        // in config; the IFileStorageService contract is identical.
+        var storageBackend = config["Storage:Backend"] ?? "local";
+        if (storageBackend.Equals("s3", StringComparison.OrdinalIgnoreCase))
+            services.AddSingleton<IFileStorageService, S3FileStorageService>();
+        else
+            services.AddSingleton<IFileStorageService, LocalFileStorageService>();
+
         services.AddHttpClient();
         services.AddScoped<IExternalAuthClient, ExternalAuthClient>();
         services.AddScoped<IAuthService, AuthService>();
@@ -88,9 +97,13 @@ public static class DependencyInjection
 
         // ── Active WMS adapter (post-Phase-7 port) ──
         // Pick adapter by Wms:BaseUrl presence: configured = live, missing = mock.
+        // LiveWmsAdapter is a singleton so apiKey + authSid persist across
+        // requests. MockWmsAdapter is stateless. Switch via Wms:BaseUrl
+        // (set even to a sentinel like "from-db" if the real URL lives in
+        // the Settings table — LiveWmsAdapter re-reads at auth time).
         var wmsBaseUrl = config["Wms:BaseUrl"];
         if (!string.IsNullOrWhiteSpace(wmsBaseUrl))
-            services.AddScoped<IWmsAdapter, LiveWmsAdapter>();
+            services.AddSingleton<IWmsAdapter, LiveWmsAdapter>();
         else
             services.AddScoped<IWmsAdapter, MockWmsAdapter>();
         services.AddScoped<IWmsService, WmsService>();

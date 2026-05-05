@@ -51,20 +51,34 @@ dotnet run --project apps/api-dotnet/gateway
 dotnet test apps/api-dotnet/api-dotnet.sln
 ```
 
-## Phase 0 deliverables (this scaffold)
+## Phase status
 
-| Item | Status | Where |
-|------|--------|-------|
-| Solution + 4 projects + tests + gateway | ✅ | `api-dotnet.sln` |
-| ASP.NET Core 8 host + Serilog + Swagger | ✅ | `Api/Program.cs` |
-| EF Core + Npgsql wired | ✅ | `Infrastructure/Persistence/AppDbContext.cs` |
-| YARP gateway with Node fallback | ✅ | `gateway/appsettings.json` |
-| Docker compose (parallel-run topology) | ✅ | `docker-compose.yml` |
-| Health endpoints `/api/v1/ping`, `/api/v1/ready` | ✅ | `Controllers/HealthController.cs` |
-| ProblemDetails-style exception middleware | ✅ | `Middleware/ExceptionHandlingMiddleware.cs` |
-| Reference Phase 2 module (`Customers`) | ✅ | `Customers/*` |
-| Reference Phase 1 auth (login + OTP stubs) | ✅ | `Auth/*` |
-| SignalR hub stub for Tech PWA | ✅ | `Hubs/TechHub.cs` |
+| Phase | Scope | Status |
+|---|---|---|
+| 0 | Solution + 6 projects + Docker + YARP scaffold | ✅ Closed |
+| 1 | JWT auth, FluentValidation, Serilog, Storage | ✅ Closed |
+| 2 | Customers / Products / Users (master data) | ✅ Closed |
+| 3 | Leads / Quotations / SalesOrders + state machine + 24 Postgres enum mappings | ✅ Closed |
+| 4 | Tickets / Assets / PM / RMA / Renewals / ServiceAgreements + Tech + SignalR | ✅ Closed |
+| 5 | Customer Portal (OTP login, MyAssets/Tickets/Renewals) | ✅ Closed |
+| 6 | Reports / Feedback / Stock / WMS observability | ✅ Closed |
+| 7 | Cutover docs + ops scripts | ✅ Closed |
+
+See [CUTOVER.md](CUTOVER.md) for the production swap procedure and route inventory.
+
+## Test coverage
+
+`dotnet test` runs **27 integration tests** against a live PostgreSQL instance:
+
+| Suite | Count | Covers |
+|---|---|---|
+| HealthEndpointTests | 1 | `/api/v1/ping` via `WebApplicationFactory<Program>` |
+| Phase2ParityTests | 5 | Master-data list/get/CRUD round-trip |
+| Phase3SmokeTests | 3 | Sales-flow read paths |
+| Phase3WriteTests | 2 | LeadStage state machine + CustomerType enum round-trip |
+| Phase4SmokeTests | 6 | After-sales module reads |
+| Phase5SmokeTests | 4 | Customer OTP login + Tech GPS upsert |
+| Phase6SmokeTests | 6 | Reports aggregation + Feedback + Stock + WMS |
 
 ## Scaffolding entities from existing DB
 

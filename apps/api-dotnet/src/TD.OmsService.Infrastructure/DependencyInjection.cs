@@ -5,33 +5,41 @@ using TD.OmsService.Application.Assets;
 using TD.OmsService.Application.Auth;
 using TD.OmsService.Application.Customers;
 using TD.OmsService.Application.CustomerPortal;
+using TD.OmsService.Application.Feedbacks;
 using TD.OmsService.Application.Leads;
 using TD.OmsService.Application.PmSchedules;
 using TD.OmsService.Application.Products;
 using TD.OmsService.Application.Quotations;
 using TD.OmsService.Application.Renewals;
+using TD.OmsService.Application.Reports;
 using TD.OmsService.Application.Rmas;
 using TD.OmsService.Application.SalesOrders;
 using TD.OmsService.Application.ServiceAgreements;
 using TD.OmsService.Application.ServiceTickets;
+using TD.OmsService.Application.Stock;
 using TD.OmsService.Application.Tech;
 using TD.OmsService.Application.Users;
+using TD.OmsService.Application.Wms;
 using TD.OmsService.Infrastructure.Assets;
 using TD.OmsService.Infrastructure.Auth;
 using TD.OmsService.Infrastructure.Customers;
 using TD.OmsService.Infrastructure.CustomerPortal;
+using TD.OmsService.Infrastructure.Feedbacks;
 using TD.OmsService.Infrastructure.Leads;
 using TD.OmsService.Infrastructure.PmSchedules;
 using TD.OmsService.Infrastructure.Products;
 using TD.OmsService.Infrastructure.Quotations;
 using TD.OmsService.Infrastructure.Renewals;
+using TD.OmsService.Infrastructure.Reports;
 using TD.OmsService.Infrastructure.Rmas;
 using TD.OmsService.Infrastructure.SalesOrders;
 using TD.OmsService.Infrastructure.ServiceAgreements;
 using TD.OmsService.Infrastructure.ServiceTickets;
+using TD.OmsService.Infrastructure.Stock;
 using TD.OmsService.Infrastructure.Storage;
 using TD.OmsService.Infrastructure.Tech;
 using TD.OmsService.Infrastructure.Users;
+using TD.OmsService.Infrastructure.Wms;
 
 namespace TD.OmsService.Infrastructure;
 
@@ -67,6 +75,12 @@ public static class DependencyInjection
 
         // ── Phase 5: Customer Portal ──
         services.AddScoped<ICustomerPortalService, CustomerPortalService>();
+
+        // ── Phase 6: Reports / Feedback / Stock / WMS ──
+        services.AddScoped<IReportsService, ReportsService>();
+        services.AddScoped<IFeedbackService, FeedbackService>();
+        services.AddScoped<IStockService, StockService>();
+        services.AddScoped<IWmsService, WmsService>();
 
         return services;
     }

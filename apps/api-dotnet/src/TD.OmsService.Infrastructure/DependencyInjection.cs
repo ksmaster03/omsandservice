@@ -3,11 +3,17 @@ using Microsoft.Extensions.DependencyInjection;
 using TD.OmsService.Application.Abstractions;
 using TD.OmsService.Application.Auth;
 using TD.OmsService.Application.Customers;
+using TD.OmsService.Application.Leads;
 using TD.OmsService.Application.Products;
+using TD.OmsService.Application.Quotations;
+using TD.OmsService.Application.SalesOrders;
 using TD.OmsService.Application.Users;
 using TD.OmsService.Infrastructure.Auth;
 using TD.OmsService.Infrastructure.Customers;
+using TD.OmsService.Infrastructure.Leads;
 using TD.OmsService.Infrastructure.Products;
+using TD.OmsService.Infrastructure.Quotations;
+using TD.OmsService.Infrastructure.SalesOrders;
 using TD.OmsService.Infrastructure.Storage;
 using TD.OmsService.Infrastructure.Users;
 
@@ -27,6 +33,11 @@ public static class DependencyInjection
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IUserService, UserService>();
+
+        // ── Phase 3: Sales Flow (read-only stubs) ──
+        services.AddScoped<ILeadService, LeadService>();
+        services.AddScoped<IQuotationService, QuotationService>();
+        services.AddScoped<ISalesOrderService, SalesOrderService>();
 
         return services;
     }

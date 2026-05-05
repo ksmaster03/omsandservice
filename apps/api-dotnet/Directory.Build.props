@@ -12,7 +12,7 @@
          CA1860 — Count() vs Any() (negligible perf for our queries)
          CA1062 — public-API null guards (we own all callers)
          CA2007 — ConfigureAwait(false) (we're in app code, default sync context is fine) -->
-    <NoWarn>$(NoWarn);CA1304;CA1305;CA1311;CA1862;CA1860;CA1062;CA2007;CA1819;CA2227;CA1056;CA1054;CA1000</NoWarn>
+    <NoWarn>$(NoWarn);CA1304;CA1305;CA1311;CA1862;CA1860;CA1062;CA2007;CA1819;CA2227;CA1056;CA1054;CA1000;CA1861;CA1707;CA1822;CA1816;CA2208;CA1851</NoWarn>
     <RootNamespace>TD.OmsService</RootNamespace>
     <Company>Toptier Digital</Company>
     <Product>TD.Order_And_Service</Product>

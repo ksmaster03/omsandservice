@@ -6,9 +6,13 @@ public sealed class CreateProductRequestValidator : AbstractValidator<CreateProd
 {
     public CreateProductRequestValidator()
     {
-        RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.Sku).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.StandardPrice).GreaterThanOrEqualTo(0).When(x => x.StandardPrice.HasValue);
+        RuleFor(x => x.Category).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.Uom).NotEmpty().MaximumLength(20);
+        RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.WarrantyMonths).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.PmIntervalMonths).GreaterThanOrEqualTo(0);
     }
 }
 
@@ -16,8 +20,8 @@ public sealed class UpdateProductRequestValidator : AbstractValidator<UpdateProd
 {
     public UpdateProductRequestValidator()
     {
-        RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.Sku).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.StandardPrice).GreaterThanOrEqualTo(0).When(x => x.StandardPrice.HasValue);
+        RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
     }
 }

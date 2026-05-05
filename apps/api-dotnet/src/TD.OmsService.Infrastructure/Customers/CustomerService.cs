@@ -1,15 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using TD.OmsService.Application.Common;
 using TD.OmsService.Application.Customers;
-using TD.OmsService.Domain.Entities;
 using TD.OmsService.Infrastructure.Persistence;
+using TD.OmsService.Infrastructure.Persistence.Generated;
 
 namespace TD.OmsService.Infrastructure.Customers;
 
 /// <summary>
-/// Reference implementation of the Phase 2 module pattern.
-/// Once DbContext scaffolding adds DbSet&lt;Customer&gt;, switch the in-memory stub
-/// below to db.Customers calls — controller/service contract stays identical.
+/// Phase 2 reference: Customer CRUD against the scaffolded EF model. The
+/// scaffold skips the Postgres-native enum column `Customer.type`, so this
+/// service does not currently expose CustomerType — it will land alongside
+/// Phase 3 work via Npgsql NpgsqlDataSourceBuilder.MapEnum&lt;CustomerType&gt;().
 /// </summary>
 public sealed class CustomerService(AppDbContext db) : ICustomerService
 {
@@ -18,14 +19,14 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = db.Set<Customer>().AsNoTracking().AsQueryable();
+        var query = db.Customers.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var s = search.Trim().ToLower();
+            var s = search.Trim();
             query = query.Where(c =>
-                c.Name.ToLower().Contains(s) ||
-                (c.Phone != null && c.Phone.Contains(s)) ||
-                (c.Email != null && c.Email.ToLower().Contains(s)));
+                EF.Functions.ILike(c.Name, $"%{s}%") ||
+                (c.Phone != null && EF.Functions.ILike(c.Phone, $"%{s}%")) ||
+                (c.Email != null && EF.Functions.ILike(c.Email, $"%{s}%")));
         }
 
         var total = await query.CountAsync(ct);
@@ -33,7 +34,7 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
             .OrderBy(c => c.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => new CustomerListItem(c.Id, c.Name, c.Type, c.Phone, c.Email, c.Active))
+            .Select(c => new CustomerListItem(c.Id, c.Name, c.Phone, c.Email, c.Active))
             .ToListAsync(ct);
 
         return new PagedResult<CustomerListItem>(items, total, page, pageSize);
@@ -41,7 +42,7 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
 
     public async Task<CustomerDto?> GetAsync(string id, CancellationToken ct)
     {
-        var c = await db.Set<Customer>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        var c = await db.Customers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
         return c is null ? null : Map(c);
     }
 
@@ -49,8 +50,8 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
     {
         var entity = new Customer
         {
+            Id = Guid.NewGuid().ToString(),
             Name = req.Name,
-            Type = req.Type,
             WmsCode = req.WmsCode,
             AlternateName = req.AlternateName,
             TaxId = req.TaxId,
@@ -60,18 +61,20 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
             Address = req.Address,
             Lat = req.Lat,
             Lng = req.Lng,
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         };
-        db.Add(entity);
+        db.Customers.Add(entity);
         await db.SaveChangesAsync(ct);
         return Map(entity);
     }
 
     public async Task<CustomerDto?> UpdateAsync(string id, UpdateCustomerRequest req, CancellationToken ct)
     {
-        var entity = await db.Set<Customer>().FirstOrDefaultAsync(c => c.Id == id, ct);
+        var entity = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
         if (entity is null) return null;
         entity.Name = req.Name;
-        entity.Type = req.Type;
         entity.WmsCode = req.WmsCode;
         entity.AlternateName = req.AlternateName;
         entity.TaxId = req.TaxId;
@@ -82,21 +85,22 @@ public sealed class CustomerService(AppDbContext db) : ICustomerService
         entity.Lat = req.Lat;
         entity.Lng = req.Lng;
         entity.Active = req.Active;
+        entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return Map(entity);
     }
 
     public async Task<bool> DeleteAsync(string id, CancellationToken ct)
     {
-        var entity = await db.Set<Customer>().FirstOrDefaultAsync(c => c.Id == id, ct);
+        var entity = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
         if (entity is null) return false;
         entity.Active = false;
+        entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return true;
     }
 
     private static CustomerDto Map(Customer c) => new(
-        c.Id, c.WmsCode, c.Name, c.AlternateName, c.TaxId, c.Type,
-        c.ContactName, c.Phone, c.Email, c.Address,
-        c.Lat, c.Lng, c.Active, c.CreatedAt, c.UpdatedAt);
+        c.Id, c.WmsCode, c.Name, c.AlternateName, c.TaxId, c.ContactName,
+        c.Phone, c.Email, c.Address, c.Lat, c.Lng, c.Active, c.CreatedAt, c.UpdatedAt);
 }

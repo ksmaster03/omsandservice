@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using TD.OmsService.Application.Common;
 using TD.OmsService.Application.Products;
-using TD.OmsService.Domain.Entities;
 using TD.OmsService.Infrastructure.Persistence;
+using TD.OmsService.Infrastructure.Persistence.Generated;
 
 namespace TD.OmsService.Infrastructure.Products;
 
@@ -10,28 +10,28 @@ public sealed class ProductService(AppDbContext db) : IProductService
 {
     public async Task<PagedResult<ProductListItem>> ListAsync(PageQuery q, CancellationToken ct)
     {
-        var query = db.Set<Product>().AsNoTracking().AsQueryable();
+        var query = db.Products.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(q.Search))
         {
-            var s = q.Search.Trim().ToLower();
+            var s = q.Search.Trim();
             query = query.Where(p =>
-                p.Name.ToLower().Contains(s) ||
-                p.Code.ToLower().Contains(s) ||
-                (p.Brand != null && p.Brand.ToLower().Contains(s)));
+                EF.Functions.ILike(p.Name, $"%{s}%") ||
+                EF.Functions.ILike(p.Sku, $"%{s}%") ||
+                EF.Functions.ILike(p.Category, $"%{s}%"));
         }
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(p => p.Code)
+            .OrderBy(p => p.Sku)
             .Skip((q.SafePage - 1) * q.SafePageSize)
             .Take(q.SafePageSize)
-            .Select(p => new ProductListItem(p.Id, p.Code, p.Name, p.Brand, p.StandardPrice, p.Active))
+            .Select(p => new ProductListItem(p.Id, p.Sku, p.Name, p.Category, p.Price, p.Active))
             .ToListAsync(ct);
         return new PagedResult<ProductListItem>(items, total, q.SafePage, q.SafePageSize);
     }
 
     public async Task<ProductDto?> GetAsync(string id, CancellationToken ct)
     {
-        var p = await db.Set<Product>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        var p = await db.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
         return p is null ? null : Map(p);
     }
 
@@ -39,45 +39,58 @@ public sealed class ProductService(AppDbContext db) : IProductService
     {
         var entity = new Product
         {
-            Code = req.Code,
+            Id = Guid.NewGuid().ToString(),
+            Sku = req.Sku,
             Name = req.Name,
-            Description = req.Description,
             Category = req.Category,
-            Brand = req.Brand,
-            Unit = req.Unit,
-            StandardPrice = req.StandardPrice,
+            Price = req.Price,
+            WarrantyMonths = req.WarrantyMonths,
+            PmIntervalMonths = req.PmIntervalMonths,
+            Uom = req.Uom,
+            WmsPartNo = req.WmsPartNo,
+            PartType = req.PartType,
+            StandardPack = req.StandardPack,
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         };
-        db.Add(entity);
+        db.Products.Add(entity);
         await db.SaveChangesAsync(ct);
         return Map(entity);
     }
 
     public async Task<ProductDto?> UpdateAsync(string id, UpdateProductRequest req, CancellationToken ct)
     {
-        var entity = await db.Set<Product>().FirstOrDefaultAsync(p => p.Id == id, ct);
+        var entity = await db.Products.FirstOrDefaultAsync(p => p.Id == id, ct);
         if (entity is null) return null;
-        entity.Code = req.Code;
+        entity.Sku = req.Sku;
         entity.Name = req.Name;
-        entity.Description = req.Description;
         entity.Category = req.Category;
-        entity.Brand = req.Brand;
-        entity.Unit = req.Unit;
-        entity.StandardPrice = req.StandardPrice;
+        entity.Price = req.Price;
+        entity.WarrantyMonths = req.WarrantyMonths;
+        entity.PmIntervalMonths = req.PmIntervalMonths;
+        entity.Uom = req.Uom;
+        entity.WmsPartNo = req.WmsPartNo;
+        entity.PartType = req.PartType;
+        entity.StandardPack = req.StandardPack;
         entity.Active = req.Active;
+        entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return Map(entity);
     }
 
     public async Task<bool> DeleteAsync(string id, CancellationToken ct)
     {
-        var entity = await db.Set<Product>().FirstOrDefaultAsync(p => p.Id == id, ct);
+        var entity = await db.Products.FirstOrDefaultAsync(p => p.Id == id, ct);
         if (entity is null) return false;
         entity.Active = false;
+        entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return true;
     }
 
     private static ProductDto Map(Product p) => new(
-        p.Id, p.Code, p.Name, p.Description, p.Category, p.Brand, p.Unit,
-        p.StandardPrice, p.Active, p.CreatedAt, p.UpdatedAt);
+        p.Id, p.Sku, p.Name, p.Category, p.Price, p.WarrantyMonths,
+        p.PmIntervalMonths, p.WmsPartNo, p.PartType, p.Uom,
+        p.StandardPack, p.Active, p.CreatedAt, p.UpdatedAt);
 }

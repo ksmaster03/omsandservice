@@ -11,6 +11,11 @@ using TD.OmsService.Application;
 using TD.OmsService.Infrastructure;
 using TD.OmsService.Infrastructure.Persistence;
 
+// Match Prisma/Npgsql 5.x DateTime semantics: `timestamp(3) without time zone`
+// columns must accept DateTime values regardless of Kind. Npgsql 6+ would
+// otherwise reject DateTime.UtcNow against non-timestamptz columns.
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── Serilog ─────────────────────────────────────────────────

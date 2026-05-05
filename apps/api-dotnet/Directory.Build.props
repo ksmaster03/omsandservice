@@ -1,0 +1,24 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- Suppress culture/style analyzers that don't add safety for our use:
+         CA1304/CA1305/CA1311 — culture in ToLower/Console (server-side ASCII keys)
+         CA1862 — string.Contains StringComparison overload (LINQ-to-SQL doesn't honor it)
+         CA1860 — Count() vs Any() (negligible perf for our queries)
+         CA1062 — public-API null guards (we own all callers)
+         CA2007 — ConfigureAwait(false) (we're in app code, default sync context is fine) -->
+    <NoWarn>$(NoWarn);CA1304;CA1305;CA1311;CA1862;CA1860;CA1062;CA2007;CA1819;CA2227;CA1056;CA1054;CA1000;CA1861;CA1707;CA1822;CA1816;CA2208;CA1851</NoWarn>
+    <!-- Tests build many DbContexts via WebApplicationFactory; the default 20-cap warning becomes an error under TreatWarningsAsErrors. -->
+    <!-- We don't change DbContextOptions per test, but Npgsql + enum mapping causes EF to rebuild internal providers. -->
+    <DefineConstants>$(DefineConstants);TESTS_INTEGRATION</DefineConstants>
+    <RootNamespace>TD.OmsService</RootNamespace>
+    <Company>Toptier Digital</Company>
+    <Product>TD.Order_And_Service</Product>
+    <Version>3.0.0</Version>
+  </PropertyGroup>
+</Project>

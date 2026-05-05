@@ -68,3 +68,10 @@ TD.Order_And_Service/
 # Playwright screenshot output
 screenshots/
 
+# .NET build artifacts
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+

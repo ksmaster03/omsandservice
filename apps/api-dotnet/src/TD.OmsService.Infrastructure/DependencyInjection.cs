@@ -85,6 +85,14 @@ public static class DependencyInjection
         services.AddScoped<IReportsService, ReportsService>();
         services.AddScoped<IFeedbackService, FeedbackService>();
         services.AddScoped<IStockService, StockService>();
+
+        // ── Active WMS adapter (post-Phase-7 port) ──
+        // Pick adapter by Wms:BaseUrl presence: configured = live, missing = mock.
+        var wmsBaseUrl = config["Wms:BaseUrl"];
+        if (!string.IsNullOrWhiteSpace(wmsBaseUrl))
+            services.AddScoped<IWmsAdapter, LiveWmsAdapter>();
+        else
+            services.AddScoped<IWmsAdapter, MockWmsAdapter>();
         services.AddScoped<IWmsService, WmsService>();
 
         return services;

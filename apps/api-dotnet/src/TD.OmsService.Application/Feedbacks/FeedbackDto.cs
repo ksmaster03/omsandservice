@@ -2,6 +2,8 @@ using TD.OmsService.Domain.Common;
 
 namespace TD.OmsService.Application.Feedbacks;
 
+public sealed record UploadedFileDto(string Url, string Name, long Size, string ContentType);
+
 public sealed record FeedbackDto(
     string Id,
     FeedbackType Type,

@@ -34,7 +34,7 @@ public sealed class ReportsController(IReportsService service) : ControllerBase
 
 [ApiController]
 [Route("api/v1/feedback")]
-public sealed class FeedbackController(IFeedbackService service, ICurrentUser current) : ControllerBase
+public sealed class FeedbackController(IFeedbackService service, ICurrentUser current, IFileStorageService storage) : ControllerBase
 {
     /// <summary>Anonymous create — frontend submits feedback without auth.</summary>
     [HttpPost]
@@ -43,6 +43,28 @@ public sealed class FeedbackController(IFeedbackService service, ICurrentUser cu
     {
         var f = await service.CreateAsync(req, current.UserId, ct);
         return Ok(ApiResponse<FeedbackDto>.Success(f));
+    }
+
+    /// <summary>
+    /// Anonymous file upload for feedback attachments. Mirrors POST
+    /// /api/v1/feedback/upload from the Node API: image (jpeg/png/webp) or
+    /// PDF up to 5 MB. Returns { url, name, size, contentType } for the
+    /// frontend to attach to the next CreateFeedbackRequest.
+    /// </summary>
+    [HttpPost("upload")]
+    [AllowAnonymous]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<UploadedFileDto>>> Upload(IFormFile? file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(ApiResponse<UploadedFileDto>.Failure("NO_FILE", "No file uploaded"));
+        if (!storage.IsAllowedFeedback(file.ContentType))
+            return BadRequest(ApiResponse<UploadedFileDto>.Failure("INVALID_TYPE", $"Unsupported file type: {file.ContentType}"));
+
+        await using var stream = file.OpenReadStream();
+        var stored = await storage.SaveAsync(UploadKind.Feedback, Guid.NewGuid().ToString("N"), stream, file.FileName, file.ContentType, ct);
+        return Ok(ApiResponse<UploadedFileDto>.Success(new UploadedFileDto(stored.Url, file.FileName, stored.Size, stored.Mime)));
     }
 
     [HttpGet]
@@ -111,6 +133,7 @@ public sealed class StockController(IStockService service) : ControllerBase
 [Authorize(Policy = "Admin")]
 public sealed class WmsController(IWmsService service) : ControllerBase
 {
+    // ── Phase 6 read-only ───────────────────────────────────
     [HttpGet("sync-logs")]
     public async Task<ActionResult<ApiResponse<PagedResult<WmsSyncLogDto>>>> SyncLogs(
         [FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken ct = default) =>
@@ -119,4 +142,52 @@ public sealed class WmsController(IWmsService service) : ControllerBase
     [HttpGet("stock-cache")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<WmsStockCacheDto>>>> StockCache(CancellationToken ct) =>
         Ok(ApiResponse<IReadOnlyList<WmsStockCacheDto>>.Success(await service.StockCacheAsync(ct)));
+
+    // ── Active integration (Phase-7-bis: ported from Node) ──
+    [HttpGet("status")]
+    public async Task<ActionResult<ApiResponse<WmsAdapterMode>>> Status(CancellationToken ct) =>
+        Ok(ApiResponse<WmsAdapterMode>.Success(await service.StatusAsync(ct)));
+
+    [HttpGet("parts")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<WmsPart>>>> Parts(CancellationToken ct)
+    {
+        try { return Ok(ApiResponse<IReadOnlyList<WmsPart>>.Success(await service.GetPartsAsync(ct))); }
+        catch (Exception ex) { return StatusCode(502, ApiResponse<IReadOnlyList<WmsPart>>.Failure("WMS_ERROR", ex.Message)); }
+    }
+
+    [HttpPost("sync-products")]
+    public async Task<ActionResult<ApiResponse<SyncProductsResponse>>> SyncProducts([FromBody] SyncProductsRequest req, CancellationToken ct)
+    {
+        try { return Ok(ApiResponse<SyncProductsResponse>.Success(await service.SyncProductsAsync(req, ct))); }
+        catch (ArgumentException ex) { return BadRequest(ApiResponse<SyncProductsResponse>.Failure("VALIDATION", ex.Message)); }
+        catch (Exception ex) { return StatusCode(502, ApiResponse<SyncProductsResponse>.Failure("WMS_ERROR", ex.Message)); }
+    }
+
+    [HttpPost("scan-in")]
+    public async Task<ActionResult<ApiResponse<object>>> ScanIn([FromBody] ScanInRequest req, CancellationToken ct)
+    {
+        try { return Ok(ApiResponse<object>.Success(await service.ScanInAsync(req, ct))); }
+        catch (Exception ex) { return StatusCode(502, ApiResponse<object>.Failure("WMS_ERROR", ex.Message)); }
+    }
+
+    [HttpPost("scan-out")]
+    public async Task<ActionResult<ApiResponse<object>>> ScanOut([FromBody] ScanOutRequest req, CancellationToken ct)
+    {
+        try { return Ok(ApiResponse<object>.Success(await service.ScanOutAsync(req, ct))); }
+        catch (Exception ex) { return StatusCode(502, ApiResponse<object>.Failure("WMS_ERROR", ex.Message)); }
+    }
+
+    [HttpPost("close-order")]
+    public async Task<ActionResult<ApiResponse<object>>> CloseOrder([FromBody] CloseOrderRequest req, CancellationToken ct)
+    {
+        try { return Ok(ApiResponse<object>.Success(await service.CloseOrderAsync(req, ct))); }
+        catch (Exception ex) { return StatusCode(502, ApiResponse<object>.Failure("WMS_ERROR", ex.Message)); }
+    }
+
+    [HttpPost("inventory-count")]
+    public async Task<ActionResult<ApiResponse<object>>> InventoryCount([FromBody] InventoryCountRequest req, CancellationToken ct)
+    {
+        try { return Ok(ApiResponse<object>.Success(await service.InventoryCountAsync(req, ct))); }
+        catch (Exception ex) { return StatusCode(502, ApiResponse<object>.Failure("WMS_ERROR", ex.Message)); }
+    }
 }

@@ -20,10 +20,10 @@ All routes below now resolve to **`api-dotnet:4111`** through the gateway:
 | After-Sales | `/api/v1/internal/{tickets,assets,pm-schedules,rmas,renewals,service-agreements}` | 4 | |
 | Reports | `/api/v1/internal/reports/{dashboard,sales-pipeline,top-sellers,tickets-by-stage}` | 6 | |
 | Stock | `/api/v1/internal/stock/*` | 6 | List/set/adjust |
-| WMS read | `/api/v1/internal/wms/{sync-logs,stock-cache}` | 6 | Read-only |
+| WMS observability | `/api/v1/internal/wms/{sync-logs,stock-cache}` | 6 | Read-only |
+| WMS active | `/api/v1/internal/wms/{status,parts,sync-products,scan-in,scan-out,close-order,inventory-count}` | 8 | IWmsAdapter abstraction (Mock default, Live via HttpClient when `Wms:BaseUrl` set) + WmsSyncLogger audit trail |
 | Feedback | `/api/v1/feedback/*` | 6 | Public create + staff manage |
-| Feedback upload | `/api/v1/feedback/upload` | — | **Stays on Node** until file upload moves |
-| WMS active | `/api/v1/internal/wms/{sync-products,scan-in,scan-out,close-order,inventory-count}` | — | **Stays on Node** — WMS spec stabilising |
+| Feedback upload | `/api/v1/feedback/upload` | 8 | Multipart, image/pdf ≤5MB, via `IFileStorageService` (local-disk default, swap to S3 by registering `S3FileStorageService`) |
 
 Anything not in the list above falls through to the Node cluster via
 `node-fallback` in `gateway/appsettings.json`.
@@ -98,17 +98,18 @@ or do a `kubectl rollout restart` in prod.
 
 ## What's NOT migrated (and why)
 
-- **Feedback file upload** (`POST /api/v1/feedback/upload`): Multipart upload
-  stays in Node until the .NET-side `IFileStorageService` adds multipart
-  parsing + S3 sink (`apps/api-dotnet` only has the local-disk backend
-  scaffold today).
-- **WMS active integration** (sync-products, scan-in/out, close-order,
-  inventory-count): The WMS spec is still in flux per Sprint 4 notes. The
-  observability side (sync logs, stock cache) is migrated.
-- **Email/Line notifications**: Customer-auth Google login + LINE messaging
-  endpoints stay in Node until the .NET project gains an SMTP/LINE client.
-- **PDF generation** (quotations): `puppeteer` lives in Node; QuestPDF/.NET
-  port is a follow-up — for now PDF requests fall through `node-fallback`.
+All originally-Node features are now ported. Remaining items are productionisation
+concerns rather than feature gaps:
+
+- **S3 backend for `IFileStorageService`**: A `LocalFileStorageService` is the
+  default. Swap to S3 by adding `S3FileStorageService` (AWSSDK.S3) and
+  registering it in `Infrastructure/DependencyInjection.cs` for the prod env.
+- **WMS LiveAdapter auth flow**: `LiveWmsAdapter` does plain bearer-key auth
+  via `Wms:ApiKey`. The 3-step Toptier WMS auth flow (`GetKey` → `UserLogin`
+  → `apiKey`) from `apps/api/src/adapters/wms/wms-client.ts` is not ported —
+  current setup assumes a long-lived API key. Re-port the cookie-based session
+  flow if your WMS instance requires it.
+- **Email notifications via SMTP**: Not in the Node API either — would be net new.
 
 ## Operational runbook
 

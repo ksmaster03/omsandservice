@@ -68,6 +68,7 @@ var dataSource = dataSourceBuilder.Build();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(dataSource, npg => npg.EnableRetryOnFailure(3));
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ManyServiceProvidersCreatedWarning));
     if (builder.Environment.IsDevelopment())
     {
         options.EnableSensitiveDataLogging();
@@ -124,6 +125,9 @@ builder.Services.AddSignalR();
 // ─── HttpContext + CurrentUser accessor ──────────────────────
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<TD.OmsService.Application.Abstractions.ICurrentUser, TD.OmsService.Api.Auth.CurrentUser>();
+
+// ─── SignalR-backed Tech hub broadcaster ─────────────────────
+builder.Services.AddScoped<TD.OmsService.Application.Tech.ITechHubBroadcaster, TD.OmsService.Api.Hubs.SignalRTechHubBroadcaster>();
 
 // ─── Application & Infrastructure ────────────────────────────
 builder.Services.AddApplication();
